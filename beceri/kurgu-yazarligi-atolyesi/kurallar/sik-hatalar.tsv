@@ -1,0 +1,77 @@
+desen	kural	oneri	kesinlik	not	yakalar	yakalamaz
+\bherkez\b	YAZ-SOZCUK	herkes	kesin		Herkez geldi.	Herkes geldi.
+\byanlız\b	YAZ-SOZCUK	yalnız	kesin		Yanlız kaldı.	Yalnız kaldı.
+\byalnış(\w*)	YAZ-SOZCUK	yanlış\1	kesin		Yalnış anladın.	Yanlış anladın.
+\bşöför(\w*)	YAZ-SOZCUK	şoför\1	kesin		Şöför bekledi.	Şoför bekledi.
+\bsüpriz(\w*)	YAZ-SOZCUK	sürpriz\1	kesin		Bir süpriz yaptı.	Bir sürpriz yaptı.
+\borjinal(\w*)	YAZ-SOZCUK	orijinal\1	kesin		Orjinal baskı.	Orijinal baskı.
+\bmalesef\b	YAZ-SOZCUK	maalesef	kesin		Malesef gelemem.	Maalesef gelemem.
+\btabi ki\b	YAZ-SOZCUK	tabii ki	kesin	tabi: bağımlı	Tabi ki gelirim.	Tabii ki gelirim.
+\btabiki\b	YAZ-SOZCUK	tabii ki	kesin		Tabiki gelirim.	Tabii ki gelirim.
+\beksoz(\w*)	YAZ-SOZCUK	egzoz\1	kesin		Eksoz dumanı.	Egzoz dumanı.
+\bklavuz(\w*)	YAZ-SOZCUK	kılavuz\1	kesin		Yazım klavuzu.	Yazım kılavuzu.
+\blaboratuar(\w*)	YAZ-SOZCUK	laboratuvar\1	kesin		Laboratuara gitti.	Laboratuvara gitti.
+\bentellektüel(\w*)	YAZ-SOZCUK	entelektüel\1	kesin		Entellektüel bir adam.	Entelektüel bir adam.
+\brasgele\b	YAZ-SOZCUK	rastgele	kesin		Rasgele seçti.	Rastgele seçti.
+\btraş\b	YAZ-SOZCUK	tıraş	kesin		Traş oldu.	Tıraş oldu.
+\bkordinasyon(\w*)	YAZ-SOZCUK	koordinasyon\1	kesin		Kordinasyon toplantısı.	Koordinasyon toplantısı.
+\bkolleksiyon(\w*)	YAZ-SOZCUK	koleksiyon\1	kesin		Pul kolleksiyonu.	Pul koleksiyonu.
+\bdöküman(\w*)	YAZ-SOZCUK	doküman\1	kesin		Dökümanı okudu.	Dokümanı okudu.
+\bşarz\b	YAZ-SOZCUK	şarj	kesin		Telefonu şarz etti.	Telefonu şarj etti.
+\bmeyva\b	YAZ-SOZCUK	meyve	kesin	çekimli biçimleri redaktör değerlendirir	Bir meyva soydu.	Bir meyve soydu.
+\beşkiya(\w*)	YAZ-SOZCUK	eşkıya\1	kesin		Dağda eşkiya vardı.	Dağda eşkıya vardı.
+\bmahçup(\w*)	YAZ-SOZCUK	mahcup\1	kesin		Mahçup oldu.	Mahcup oldu.
+\bcimnastik(\w*)	YAZ-SOZCUK	jimnastik\1	kesin		Cimnastik salonu.	Jimnastik salonu.
+\bşuan\b	YAZ-SOZCUK	şu an	kesin		Şuan evdeyim.	Şu an evdeyim.
+\bpekala\b	YAZ-SOZCUK	pekâlâ	kesin		Pekala, gidelim.	Pekâlâ, gidelim.
+\bdeyil(\w*)	YAZ-SOZCUK	değil\1	buyuk-ihtimal	diyalogda ağız olabilir	Öyle deyil.	Öyle değil.
+\bmakina\b	YAZ-SOZCUK	makine	buyuk-ihtimal	diyalogda ağız olabilir; çekimli biçimleri redaktör değerlendirir	Bir makina aldı.	Bir makine aldı.
+\byada\b	YAZ-SOZCUK	ya da	buyuk-ihtimal	yada: bir taş adı	Çay yada kahve.	Çay ya da kahve.
+\bbişey(\w*)	YAZ-BITISIK	bir şey\1	buyuk-ihtimal	diyalogda ağız olabilir	Bişey demedi.	Bir şey demedi.
+\bherşey(\w*)	YAZ-BITISIK	her şey\1	kesin		Herşey yolunda.	Her şey yolunda.
+\bbirşey(\w*)	YAZ-BITISIK	bir şey\1	kesin		Birşeyler oldu.	Bir şeyler oldu.
+\bhiçbirşey(\w*)	YAZ-BITISIK	hiçbir şey\1	kesin		Hiçbirşey yok.	Hiçbir şey yok.
+\bhiç bir\b	YAZ-BITISIK	hiçbir	buyuk-ihtimal	soruda hiç = bir kez olsun: Hiç bir kitap okudun mu?	Hiç bir yerde.	Hiçbir yerde.
+\bbir kaç\b	YAZ-BITISIK	birkaç	kesin		Bir kaç gün.	Birkaç gün.
+\bbir çok\b	YAZ-BITISIK	birçok	kesin		Bir çok insan.	Birçok insan.
+\bbir çoğu(\w*)	YAZ-BITISIK	birçoğu\1	kesin		Bir çoğu gitti.	Birçoğu gitti.
+\bher hangi\b	YAZ-BITISIK	herhangi	kesin		Her hangi bir gün.	Herhangi bir gün.
+\bherhangibir\b	YAZ-BITISIK	herhangi bir	kesin		Herhangibir şey.	Herhangi bir şey.
+\bhiçkimse(\w*)	YAZ-BITISIK	hiç kimse\1	kesin		Hiçkimse gelmedi.	Hiç kimse gelmedi.
+\bherbiri(\w*)	YAZ-BITISIK	her biri\1	kesin		Herbiri ayrı.	Her biri ayrı.
+\bherbir\b	YAZ-BITISIK	her bir	kesin		Herbir adım.	Her bir adım.
+\bbirgün\b	YAZ-BITISIK	bir gün	kesin		Birgün gelecek.	Bir gün gelecek.
+\bhergün\b	YAZ-BITISIK	her gün	kesin		Hergün yürür.	Her gün yürür.
+\bherzaman\b	YAZ-BITISIK	her zaman	kesin		Herzaman böyle.	Her zaman böyle.
+\bheryer(\w*)	YAZ-BITISIK	her yer\1	kesin		Heryer karanlık.	Her yer karanlık.
+\bbirkez\b	YAZ-BITISIK	bir kez	kesin		Birkez daha.	Bir kez daha.
+\bbirdaha\b	YAZ-BITISIK	bir daha	kesin		Birdaha gelme.	Bir daha gelme.
+\bbirtek\b	YAZ-BITISIK	bir tek	kesin		Birtek o kaldı.	Bir tek o kaldı.
+\bpekçok\b	YAZ-BITISIK	pek çok	kesin		Pekçok kitap.	Pek çok kitap.
+\byanısıra\b	YAZ-BITISIK	yanı sıra	kesin		Bunun yanısıra.	Bunun yanı sıra.
+\bherneyse\b	YAZ-BITISIK	her neyse	kesin		Herneyse, gidelim.	Her neyse, gidelim.
+\bhernasılsa\b	YAZ-BITISIK	her nasılsa	kesin		Hernasılsa kurtuldu.	Her nasılsa kurtuldu.
+\bbirsürü\b	YAZ-BITISIK	bir sürü	kesin		Birsürü iş.	Bir sürü iş.
+\bhoşgeldin(\w*)	YAZ-BITISIK	hoş geldin\1	kesin		Hoşgeldiniz.	Hoş geldiniz.
+\bhoşbulduk\b	YAZ-BITISIK	hoş bulduk	kesin		Hoşbulduk.	Hoş bulduk.
+\bhoşçakal(\w*)	YAZ-BITISIK	hoşça kal\1	kesin		Hoşçakal.	Hoşça kal.
+\bherhalde\b	YAZ-SAPKA	herhâlde	buyuk-ihtimal	her hâlde: her durumda	Herhalde gelir.	Herhâlde gelir.
+\bçünki\b	YAZ-KI	çünkü	kesin		Çünki yorgundu.	Çünkü yorgundu.
+\boysa ki\b	YAZ-KI	oysaki	kesin		Oysa ki biliyordu.	Oysaki biliyordu.
+\bmadem ki\b	YAZ-KI	mademki	kesin		Madem ki geldin.	Mademki geldin.
+\bşöyleki\b	YAZ-KI	şöyle ki	kesin		Durum şöyleki.	Durum şöyle ki.
+\böyleki\b	YAZ-KI	öyle ki	kesin		Öyleki kimse duymadı.	Öyle ki kimse duymadı.
+\bbelkide\b	YAZ-DE-DA	belki de	kesin		Belkide haklısın.	Belki de haklısın.
+\byinede\b	YAZ-DE-DA	yine de	kesin		Yinede gitti.	Yine de gitti.
+\bdeğilmi\b	YAZ-MI	değil mi	kesin		Güzel değilmi?	Güzel değil mi?
+\bvarmı\b	YAZ-MI	var mı	kesin		Çay varmı?	Çay var mı?
+\byokmu\b	YAZ-MI	yok mu	kesin		Kimse yokmu?	Kimse yok mu?
+\böylemi\b	YAZ-MI	öyle mi	kesin		Öylemi dersin?	Öyle mi dersin?
+\bböylemi\b	YAZ-MI	böyle mi	kesin		Böylemi olacak?	Böyle mi olacak?
+\bselamün aleyküm\b	YAZ-ALINTI	selamünaleyküm	kesin		Selamün aleyküm, dedi.	Selamünaleyküm, dedi.
+\baleyküm selam\b	YAZ-ALINTI	aleykümselam	kesin		Aleyküm selam.	Aleykümselam.
+\binşaallah\b	YAZ-ALINTI	inşallah	kesin		İnşaallah gelir.	İnşallah gelir.
+\bmaşaallah\b	YAZ-ALINTI	maşallah	kesin		Maşaallah büyümüş.	Maşallah büyümüş.
+\b(Türkçe|İngilizce|Fransızca|Almanca|Arapça|Farsça|Kürtçe|Rusça|İtalyanca|İspanyolca|Japonca|Yunanca)'(\w+)	YAZ-KESME	\1\2	kesin	dil adlarına kesme konmaz	Türkçe'de böyle.	Türkçede böyle.
+\bTDK'nın\b	YAZ-KISALTMA	TDK'nin	kesin	okunuş: te-de-ke	TDK'nın sözlüğü.	TDK'nin sözlüğü.
+\bgeri iade\b	DIL-GEREKSIZ-SOZCUK	iade	buyuk-ihtimal		Parayı geri iade etti.	Parayı iade etti.

@@ -21,6 +21,10 @@ Açılan ekranda kendiniz için kurmayı seçin. Kurulumdan sonra `/` yazın; li
 
 Bilgisayarınızda **Python 3.9 ya da üstü** kurulu olmalı. Terminalde `python3 --version` (Windows'ta `py -3 --version`) bir sürüm göstermiyorsa python.org'dan kurun; Windows'ta kurulumda "Add to PATH" kutusunu işaretleyin.
 
+### Kurulumsuz yol: beceri
+
+Claude uygulamasında ya da claude.ai'de kullanmak için `beceri/kurgu-yazarligi-atolyesi` klasörünü zip olarak sıkıştırın; Ayarlar → Yetenekler (Capabilities) → Beceriler (Skills) → Beceri yükle ile ekleyin. Python gerekmez; denetim sohbette, bölüm bölüm yapılır.
+
 ## Kullanım
 
 Eserinizin bulunduğu klasörde Claude'a doğal dille söyleyin: "Şu bölümün imlasına bakar mısın?" Ya da kısayolu kullanın: `/atolye:imla bolum-01.docx`
