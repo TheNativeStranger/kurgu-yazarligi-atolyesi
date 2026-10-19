@@ -628,6 +628,7 @@ def dogrula(calisma, atolye=None):
     duzyazi = {b["no"] for b in bolumleri_yukle(calisma) if b["tur"] == "duzyazi"}
     kart = yazim_karti_ornekleri(atolye / "yazim-karti.md")
     kararlar = karar_alintilari(atolye / "karar-defteri.md")
+    kurallar = kural_bilgileri()
     klasor = calisma / "gorusler"
     dosyalar = sorted(d for d in klasor.glob("*.json") if not d.name.endswith(".dogrulanmis.json")) if klasor.exists() else []
     if not dosyalar:
@@ -665,6 +666,10 @@ def dogrula(calisma, atolye=None):
                 bulgu["bolum"], bulgu["paragraf"] = yer
             if bulgu.get("kesinlik") not in KESINLIKLER:
                 bulgu["kesinlik"] = "buyuk-ihtimal"
+            # tdk.md'de tanımı olmayan bir kurala dayanan bulgu "kesin" olamaz.
+            if bulgu.get("kural") not in kurallar and bulgu["kesinlik"] == "kesin":
+                bulgu["kesinlik"] = "buyuk-ihtimal"
+                sayac["imla_kural_tanimsiz"] += 1
             bulgu.setdefault("sozluk", None)
             bulgu.setdefault("docx", None)
             imla.append(bulgu)
@@ -672,15 +677,19 @@ def dogrula(calisma, atolye=None):
 
         bulgular = []
         for bulgu in gorus["bulgular"]:
-            kanitlar = []
-            for kanit in (bulgu.get("kanitlar") or []) if isinstance(bulgu, dict) else []:
-                yer = yer_bul(kanit.get("alinti", ""), kanit.get("bolum"), kanit.get("paragraf"), paragraflar)
+            # Bir çelişki iki tarafıyla birlikte doğrulanır: kanıtlardan biri bile kaynakta yoksa bulgu düşer.
+            kanitlar = (bulgu.get("kanitlar") or []) if isinstance(bulgu, dict) else []
+            bulunan = []
+            for kanit in kanitlar:
+                yer = yer_bul(kanit.get("alinti", "") if isinstance(kanit, dict) else "",
+                              kanit.get("bolum") if isinstance(kanit, dict) else None,
+                              kanit.get("paragraf") if isinstance(kanit, dict) else None, paragraflar)
                 if yer is None:
                     sayac["kanit_bulunamadi"] += 1
                     continue
                 kanit["bolum"], kanit["paragraf"] = yer
-                kanitlar.append(kanit)
-            if not kanitlar:
+                bulunan.append(kanit)
+            if not kanitlar or len(bulunan) < len(kanitlar):
                 sayac["bulgu_dustu"] += 1
                 continue
             bulgu["kanitlar"] = kanitlar
@@ -731,8 +740,8 @@ def sozlukten_getir(kelime):
 def sozluk(calisma, getir=sozlukten_getir, bekleme=0.3):
     """Redaktörün 'sozluk_sorgu' alanına yazdığı madde başlarını sözlükte arar.
 
-    Hepsi varsa bulgu doğrulanır; biri yoksa 'kesin' etiketi 'buyuk-ihtimal'e iner.
-    Sözlüğe bir kez erişilemezse bu okumada bir daha denenmez; bulgular olduğu gibi kalır.
+    Hepsi varsa bulgu doğrulanır; biri yoksa ya da sözlüğe erişilemezse 'kesin' etiketi
+    'buyuk-ihtimal'e iner. Sözlüğe bir kez erişilemezse bu okumada bir daha denenmez.
     """
     calisma = Path(calisma)
     onbellek_yolu = calisma / "sozluk.json"
@@ -767,13 +776,13 @@ def sozluk(calisma, getir=sozlukten_getir, bekleme=0.3):
                 durumlar.append(durum)
             if "yok" in durumlar:
                 bulgu["sozluk"] = "yok"
-                if bulgu.get("kesinlik") == "kesin":
-                    bulgu["kesinlik"] = "buyuk-ihtimal"
-                    sayac["indirildi"] += 1
             elif "erisilemedi" in durumlar:
                 bulgu["sozluk"] = "erisilemedi"
             else:
                 bulgu["sozluk"] = "var"
+            if bulgu["sozluk"] != "var" and bulgu.get("kesinlik") == "kesin":
+                bulgu["kesinlik"] = "buyuk-ihtimal"
+                sayac["indirildi"] += 1
             sayac[bulgu["sozluk"]] += 1
         dosya.write_text(json.dumps(gorus, ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -839,7 +848,7 @@ def rapor(calisma, cikti, eser_adi=None):
         s.append(f"Metinde yeri doğrulanamayan {dusen} bulgu rapordan çıkarıldı.")
     erisilemedi = sum(1 for b in imla if b.get("sozluk") == "erisilemedi")
     if erisilemedi:
-        s.append(f"{erisilemedi} bulgu için sözlüğe erişilemedi; bunlar sözlükle doğrulanmadı.")
+        s.append(f"{erisilemedi} bulgu için sözlüğe erişilemedi; bunlar sözlükle doğrulanmadığı için "kesin" sayılmadı.")
 
     if imla:
         s += ["", "## Hata türleri", "", "| Kural | Sayı | Ne diyor |", "| --- | --- | --- |"]

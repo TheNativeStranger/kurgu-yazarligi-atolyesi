@@ -304,14 +304,31 @@ class ImlaAkisi(unittest.TestCase):
             return cevaplar[kelime]
 
         sayilar = atolye.sozluk(self.calisma, getir=sahte, bekleme=0)
-        self.assertEqual(sayilar, {"var": 1, "yok": 1, "erisilemedi": 1, "indirildi": 1})
+        self.assertEqual(sayilar, {"var": 1, "yok": 1, "erisilemedi": 1, "indirildi": 2})
         imla = {b["mevcut"]: b for b in json.loads(
             (self.calisma / "gorusler" / "redaktor.dogrulanmis.json").read_text(encoding="utf-8"))["imla"]}
         self.assertEqual(imla["Selamün aleyküm"]["kesinlik"], "buyuk-ihtimal")
-        self.assertEqual(imla["kağıt"]["kesinlik"], "kesin")
+        # Sözlükle doğrulanamayan bulgu da "kesin" kalmaz.
+        self.assertEqual(imla["kağıt"]["kesinlik"], "buyuk-ihtimal")
         # Erişilemeyen kelime önbelleğe girmez, bulunanlar girer.
         atolye.sozluk(self.calisma, getir=sahte, bekleme=0)
         self.assertEqual(sorted(cagrilar), ["inşallah", "kâğıt", "kâğıt", "selamünaleyküm"])
+
+    def test_celiskinin_iki_tarafi_da_dogrulanir(self):
+        self.kusursuz_gorus(bulgular=[{"baslik": "Yarım çelişki", "kanitlar": [
+            {"alinti": "Kapıda komşumuz göründü.", "bolum": 1, "paragraf": 1},
+            {"alinti": "Böyle bir cümle metinde yok.", "bolum": 1, "paragraf": 2}]}])
+        sayilar = atolye.dogrula(self.calisma)["sayilar"]
+        self.assertEqual((sayilar["bulgu_dustu"], sayilar.get("bulgu_kalan", 0)), (1, 0))
+
+    def test_tanimsiz_kural_kesin_olamaz(self):
+        gorus = self.kusursuz_gorus()
+        gorus["imla"][0]["kural"] = "YAZ-UYDURMA"
+        (self.calisma / "gorusler" / "redaktor.json").write_text(json.dumps(gorus, ensure_ascii=False), encoding="utf-8")
+        sayilar = atolye.dogrula(self.calisma)["sayilar"]
+        self.assertEqual(sayilar["imla_kural_tanimsiz"], 1)
+        imla = json.loads((self.calisma / "gorusler" / "redaktor.dogrulanmis.json").read_text(encoding="utf-8"))["imla"]
+        self.assertEqual(next(b for b in imla if b["kural"] == "YAZ-UYDURMA")["kesinlik"], "buyuk-ihtimal")
 
     def test_rapor(self):
         self.kusursuz_gorus(bulgular=[{"baslik": "Saat çelişkisi", "aciklama": "Aynı sabah.",

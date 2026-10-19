@@ -1,6 +1,6 @@
 {
   "name": "atolye",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Kurgu Yazarlığı Atölyesi — Türkçe kurgu metninizi TDK'ye göre denetler, alıntılı ve kesinlik etiketli bir imla raporu yazar. Sizin yerinize yazmaz. Masa ve yapı haritası sonraki sürümlerde.",
   "author": {
     "name": "The Native Stranger"
