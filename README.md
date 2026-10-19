@@ -8,6 +8,25 @@ Kurgu Yazarlığı Atölyesi, Türkçe yazan her kurgu yazarına bir yayınevini
 
 > **Durum: geliştiriliyor (0.1.0).** Bu sürümde yalnız yardımcı betiğin hazırlık ve imla ön tarama adımları vardır. Editör becerisi, masa ve görsel pano sonraki adımlarda eklenecek. Plan aşağıda.
 
+## Kurulum ve komutlar
+
+Eklentinin kısa adı `atolye`'dir. Claude Code'da:
+
+```
+/plugin marketplace add TheNativeStranger/kurgu-yazarligi-atolyesi
+/plugin install atolye@kurgu-yazarligi-atolyesi
+```
+
+Komut yazmak zorunda değilsiniz: "Şu bölüme bir bakar mısın?" demeniz yeterli. Kısayol isteyenler için üç komut olacak:
+
+| Komut | Ne yapar |
+|---|---|
+| `/atolye:imla` | Yalnız dil ve imla (TDK) |
+| `/atolye:masa` | Hepsi: imla, bütün masa, kararlar, tavsiyeler ve pano |
+| `/atolye:harita` | Yalnız görsel pano, son okumadan |
+
+Başka bir eklentide aynı adlı komut yoksa `/imla`, `/masa`, `/harita` yazmak da yeter.
+
 ## Masa
 
 | Koltuk | Yalnız bunu yapar | Yapmaz |

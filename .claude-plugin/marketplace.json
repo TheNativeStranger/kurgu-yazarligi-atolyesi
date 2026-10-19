@@ -6,7 +6,7 @@
   },
   "plugins": [
     {
-      "name": "kurgu-yazarligi-atolyesi",
+      "name": "atolye",
       "source": "./",
       "description": "Kurgu Yazarlığı Atölyesi — Editörlük ve Yayın Kurulu. Eserinizi TDK'ya göre denetler, yapısını Campbell ve Vogler saatinde ve roman haritasında gösterir, yayın yönetmeninin kararıyla en fazla üç öneri sunar. Sizin yerinize yazmaz."
     }
