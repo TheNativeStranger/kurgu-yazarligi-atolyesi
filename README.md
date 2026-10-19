@@ -23,7 +23,7 @@ Bilgisayarınızda **Python 3.9 ya da üstü** kurulu olmalı. Terminalde `pytho
 
 ### Kurulumsuz yol: beceri
 
-Claude uygulamasında ya da claude.ai'de kullanmak için `beceri/kurgu-yazarligi-atolyesi` klasörünü zip olarak sıkıştırın; Ayarlar → Yetenekler (Capabilities) → Beceriler (Skills) → Beceri yükle ile ekleyin. Python gerekmez; denetim sohbette, bölüm bölüm yapılır.
+Claude uygulamasında ya da claude.ai'de kullanmak için beceri zip'ini üretin: `sh beceri/olustur.sh`. Zip, eklentinin aynı betiğini, kurallarını ve redaktör yönergesini taşır; alıntı doğrulaması, kesinlik etiketleri ve yazım kartı aynen çalışır. Ayarlar → Yetenekler'de "Kod çalıştırma ve dosya oluşturma"yı açın, ardından Beceriler → Beceri yükle ile zip'i ekleyin. Sohbetler arasında dosya kalmadığı için yazım kartınızı her denetimde yükleyin ya da projenize ekleyin.
 
 ## Kullanım
 
