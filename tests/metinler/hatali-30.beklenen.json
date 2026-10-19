@@ -1,0 +1,164 @@
+{
+ "aciklama": "İçine bilerek yerleştirilmiş 30 imla hatası ve doğru yazılmış tuzaklar. Tuzaklar hata olarak gösterilmemelidir.",
+ "hatalar": [
+  {
+   "mevcut": "Herkez",
+   "oneri": "Herkes",
+   "kural": "YAZ-SOZCUK"
+  },
+  {
+   "mevcut": "Yanlız",
+   "oneri": "Yalnız",
+   "kural": "YAZ-SOZCUK"
+  },
+  {
+   "mevcut": "Fahri Abi",
+   "oneri": "Fahri abi",
+   "kural": "YAZ-BUYUK"
+  },
+  {
+   "mevcut": "herşey",
+   "oneri": "her şey",
+   "kural": "YAZ-BITISIK"
+  },
+  {
+   "mevcut": "hiç bir",
+   "oneri": "hiçbir",
+   "kural": "YAZ-BITISIK"
+  },
+  {
+   "mevcut": "bir kaç",
+   "oneri": "birkaç",
+   "kural": "YAZ-BITISIK"
+  },
+  {
+   "mevcut": "Bende gelirim",
+   "oneri": "Ben de gelirim",
+   "kural": "YAZ-DE-DA"
+  },
+  {
+   "mevcut": "Evde ki",
+   "oneri": "Evdeki",
+   "kural": "YAZ-KI"
+  },
+  {
+   "mevcut": "Gelecekmisin",
+   "oneri": "Gelecek misin",
+   "kural": "YAZ-MI"
+  },
+  {
+   "mevcut": "değilmi",
+   "oneri": "değil mi",
+   "kural": "YAZ-MI"
+  },
+  {
+   "mevcut": "İnşaallah",
+   "oneri": "İnşallah",
+   "kural": "YAZ-ALINTI"
+  },
+  {
+   "mevcut": "Selamün aleyküm",
+   "oneri": "Selamünaleyküm",
+   "kural": "YAZ-ALINTI"
+  },
+  {
+   "mevcut": "Türkçe'de",
+   "oneri": "Türkçede",
+   "kural": "YAZ-KESME"
+  },
+  {
+   "mevcut": "İstanbulda",
+   "oneri": "İstanbul'da",
+   "kural": "YAZ-KESME"
+  },
+  {
+   "mevcut": "kağıt",
+   "oneri": "kâğıt",
+   "kural": "YAZ-SAPKA"
+  },
+  {
+   "mevcut": "milli",
+   "oneri": "millî",
+   "kural": "YAZ-SAPKA"
+  },
+  {
+   "mevcut": "hala bekliyordu",
+   "oneri": "hâlâ bekliyordu",
+   "kural": "YAZ-SAPKA"
+  },
+  {
+   "mevcut": "ayşe hanım",
+   "oneri": "Ayşe Hanım",
+   "kural": "YAZ-BUYUK"
+  },
+  {
+   "mevcut": "TDK'nın",
+   "oneri": "TDK'nin",
+   "kural": "YAZ-KISALTMA"
+  },
+  {
+   "mevcut": "gelirim oğlum",
+   "oneri": "gelirim, oğlum",
+   "kural": "NOK-VIRGUL-HITAP"
+  },
+  {
+   "mevcut": "hem çay, hem",
+   "oneri": "hem çay hem",
+   "kural": "NOK-VIRGUL-DE-DA"
+  },
+  {
+   "mevcut": "kapıyı  açtı",
+   "oneri": "kapıyı açtı",
+   "kural": "NOK-BOSLUK"
+  },
+  {
+   "mevcut": "Geldin mi.",
+   "oneri": "Geldin mi?",
+   "kural": "NOK-SORU"
+  },
+  {
+   "mevcut": "geri iade",
+   "oneri": "iade",
+   "kural": "DIL-GEREKSIZ-SOZCUK"
+  },
+  {
+   "mevcut": "Malesef",
+   "oneri": "Maalesef",
+   "kural": "YAZ-SOZCUK"
+  },
+  {
+   "mevcut": "Yinede",
+   "oneri": "Yine de",
+   "kural": "YAZ-DE-DA"
+  },
+  {
+   "mevcut": "Çünki",
+   "oneri": "Çünkü",
+   "kural": "YAZ-KI"
+  },
+  {
+   "mevcut": "şuan",
+   "oneri": "şu an",
+   "kural": "YAZ-SOZCUK"
+  },
+  {
+   "mevcut": "süpriz",
+   "oneri": "sürpriz",
+   "kural": "YAZ-SOZCUK"
+  },
+  {
+   "mevcut": "Hoşgeldin",
+   "oneri": "Hoş geldin",
+   "kural": "YAZ-BITISIK"
+  }
+ ],
+ "tuzaklar": [
+  "Sen de mi",
+  "Bende kalsın",
+  "halası",
+  "Kemal abi",
+  "Gelicem",
+  "Bir şeyler",
+  "kâse"
+ ]
+}
