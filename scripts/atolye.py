@@ -848,7 +848,7 @@ def rapor(calisma, cikti, eser_adi=None):
         s.append(f"Metinde yeri doğrulanamayan {dusen} bulgu rapordan çıkarıldı.")
     erisilemedi = sum(1 for b in imla if b.get("sozluk") == "erisilemedi")
     if erisilemedi:
-        s.append(f"{erisilemedi} bulgu için sözlüğe erişilemedi; bunlar sözlükle doğrulanmadığı için "kesin" sayılmadı.")
+        s.append(f"{erisilemedi} bulgu için sözlüğe erişilemedi; bunlar sözlükle doğrulanmadığı için “kesin” sayılmadı.")
 
     if imla:
         s += ["", "## Hata türleri", "", "| Kural | Sayı | Ne diyor |", "| --- | --- | --- |"]
