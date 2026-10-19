@@ -1,6 +1,6 @@
 # TDK kuralları
 
-Redaktörün ve `atolye.py`'nin ortak başvurusu. Her kural bir kimlik, bir ad ve dört satırdan oluşur. Kaynak, TDK Yazım Kılavuzu ve Güncel Türkçe Sözlük'tür (sozluk.gov.tr). Bir kurala emin olunamıyorsa kesin gibi sunulmaz; yazar TDK'nın kendi kaynağına yönlendirilir.
+Redaktörün ve `atolye.py`'nin ortak başvurusu. Her kural bir kimlik, bir ad ve dört satırdan oluşur. Kaynak, TDK Yazım Kılavuzu ve Güncel Türkçe Sözlük'tür (sozluk.gov.tr). Bir kurala emin olunamıyorsa kesin gibi sunulmaz; yazar TDK'nin kendi kaynağına yönlendirilir.
 
 Kesinlik satırı iki değer alır:
 
@@ -25,7 +25,7 @@ Kesinlik: bağlam
 
 ### YAZ-KI · Bağlaç "ki" ve "-ki" eki
 Kural: Bağlaç olan "ki" ayrı yazılır. İlgi zamiri ve sıfat yapan "-ki" eki bitişik yazılır. Kalıplaşmış "belki, çünkü, sanki, oysaki, mademki, hâlbuki, meğerki" bitişiktir.
-Doğru / yanlış: "Bilmiyordu ki gelecek. Evdeki kitap. Belki de." / "Bilmiyordu ki" yerine "Bilmiyorduki"; "Evde ki kitap"
+Doğru / yanlış: "Bilmiyordu ki gelecek. Evdeki kitap." / "Bilmiyorduki gelecek. Evde ki kitap."
 Kaynak: Yazım Kılavuzu, Bazı Kelimelerin ve Eklerin Yazılışı, "ki" bağlacı ve "-ki" eki
 Kesinlik: bağlam
 
@@ -36,13 +36,13 @@ Kaynak: Yazım Kılavuzu, Bazı Kelimelerin ve Eklerin Yazılışı, soru eki
 Kesinlik: bağlamdan bağımsız
 
 ### YAZ-BITISIK · Bitişik ve ayrı yazılan kelimeler
-Kural: "her şey, bir şey, hiç kimse, her biri, bir gün, her zaman, bir kez, yanı sıra" ayrı; "hiçbir, birkaç, birçok, herhangi, herhâlde" bitişik yazılır.
+Kural: "her şey, bir şey, hiç kimse, her biri, bir gün, her zaman, bir kez, yanı sıra" ayrı; "hiçbir, birkaç, birçok, herhangi, herhâlde" bitişik yazılır. Soru cümlesinde "hiç" "bir kez olsun" anlamındaysa "bir"den ayrı yazılır (Hiç bir kitap okudun mu?).
 Doğru / yanlış: "her şey, hiçbir şey, birkaç gün" / "herşey, hiç bir şey, bir kaç gün"
 Kaynak: Yazım Kılavuzu, Birleşik Kelimelerin Yazılışı; Güncel Türkçe Sözlük
 Kesinlik: bağlamdan bağımsız
 
 ### YAZ-SAPKA · Düzeltme işareti (şapka)
-Kural: Şapka yalnız üç durumda kullanılır: yazılışları aynı, anlamları ve okunuşları farklı kelimeleri ayırmak için (hâlâ / hala, âlem / alem, âdet / adet); alıntı kelimelerde ince "g, k" ünsüzlerinden sonraki "a, u" ünlülerinde (kâğıt, dükkân, rüzgâr, mekân); nispet "-î"sinde (millî, dinî, resmî).
+Kural: Şapka yalnız şu durumlarda kullanılır: yazılışları aynı, anlamları ve okunuşları farklı kelimeleri ayırmak için (hâlâ / hala, âlem / alem, âdet / adet); alıntı kelimelerde ince "g, k" ünsüzlerinden sonraki "a, u" ünlülerinde (kâğıt, dükkân, rüzgâr, mekân); nispet "-î"sinde (millî, dinî, resmî); kişi ve yer adlarında ince "l"den sonra gelen "a, u" ünlülerinde (Lâle, Halûk, Nalân, Selânik).
 Doğru / yanlış: "Hâlâ bekliyor. Kâğıdı aldı. Millî maç." / "Hala bekliyor (hâlâ anlamında). Kağıdı aldı. Milli maç."
 Kaynak: Yazım Kılavuzu, Düzeltme İşareti
 Kesinlik: bağlam
@@ -54,16 +54,16 @@ Kaynak: Güncel Türkçe Sözlük
 Kesinlik: bağlamdan bağımsız
 
 ### YAZ-BUYUK · Büyük harfler
-Kural: Cümle ve özel adlar büyük harfle başlar. Unvan ve saygı sözleri özel adla birlikte büyük harfle başlar (Ali Bey, Ayşe Hanım). Akrabalık adları ad ile kullanıldığında küçük harfle yazılır (Fahreddin abi, Ayşe teyze). Ay ve gün adları belirli bir tarih bildirmiyorsa küçük harfle başlar.
-Doğru / yanlış: "Ayşe Hanım, Fahreddin abi, 19 Ekim 2026, ekimde" / "ayşe hanım, Fahreddin Abi, ekim de"
+Kural: Cümle ve özel adlar büyük harfle başlar. Unvan ve saygı sözleri özel adla birlikte büyük harfle başlar (Ali Bey, Ayşe Hanım). Akrabalık adları addan sonra kullanıldığında küçük harfle yazılır (Fahreddin abi, Ayşe teyze); adın önünde lakap olarak kullanıldığında büyük harfle başlar (Dayı Kemal). Ay ve gün adları belirli bir tarih bildirmiyorsa küçük harfle başlar.
+Doğru / yanlış: "Ayşe Hanım, Fahreddin abi, 19 Ekim 2026, ekim ayında" / "ayşe hanım, Fahreddin Abi, Ekim ayında"
 Kaynak: Yazım Kılavuzu, Büyük Harflerin Kullanıldığı Yerler
 Kesinlik: bağlam
 
 ### YAZ-KESME · Kesme işareti
-Kural: Özel adlara getirilen çekim ekleri kesmeyle ayrılır (İstanbul'da, Ahmet'in). Kurum, kuruluş ve kitap adlarına gelen ekler kesmeyle ayrılmaz (Türk Dil Kurumunun). Dil adlarına gelen ekler kesmesizdir (Türkçede). Yapım ekleri kesmeyle ayrılmaz (İstanbullu).
+Kural: Özel adlara getirilen çekim ekleri kesmeyle ayrılır (İstanbul'da, Ahmet'in); kitap ve eser adlarına gelen ekler de öyle (Çalıkuşu'nu). Kurum, kuruluş, kurul ve iş yeri adlarına gelen ekler kesmeyle ayrılmaz (Türk Dil Kurumunun). Dil adlarına gelen ekler kesmesizdir (Türkçede); bu kısım bağlamdan bağımsızdır. Yapım ekleri kesmeyle ayrılmaz (İstanbullu).
 Doğru / yanlış: "İstanbul'da, Türkçede, İstanbullu" / "İstanbulda, Türkçe'de, İstanbul'lu"
 Kaynak: Yazım Kılavuzu, Kesme İşareti
-Kesinlik: bağlamdan bağımsız
+Kesinlik: bağlam
 
 ### YAZ-SAYI · Sayıların yazımı
 Kural: Edebî metinlerde sayılar genellikle yazıyla yazılır. Tarih, saat ve ölçü gibi kesinlik isteyen yerlerde rakam kullanılabilir; seçim eser boyunca tutarlı olmalıdır.
@@ -83,7 +83,7 @@ Kesinlik: bağlamdan bağımsız
 Kural: Hitap sözü cümlenin geri kalanından virgülle ayrılır.
 Doğru / yanlış: "Yakında terfi alıyorum, abi." / "Yakında terfi alıyorum abi."
 Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Virgül
-Kesinlik: bağlamdan bağımsız
+Kesinlik: bağlam
 
 ### NOK-VIRGUL-SIRALI · Eş görevli kelimeler arasında virgül
 Kural: Birbiri ardınca sıralanan eş görevli kelime ve kelime grupları virgülle ayrılır; son ikisi arasında "ve" varsa virgül konmaz.
@@ -92,16 +92,16 @@ Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Virgül
 Kesinlik: bağlam
 
 ### NOK-VIRGUL-ZARF-FIIL · Zarf-fiil grubundan sonra virgül
-Kural: Zarf-fiil grubu ile cümlenin geri kalanı arasına virgül konmaz; anlam karışıklığı varsa konabilir.
+Kural: Metin içinde zarf-fiil eki almış kelimeden sonra virgül konmaz. Art arda gelen zarf-fiil eki almış kelimelerden sonra virgül konur (Bir karara varıp, arkadaşına bakarak konuştu).
 Doğru / yanlış: "Sunumunu yaparken sen bu işin hiçbir yerinde yoktun." / "Sunumunu yaparken, sen bu işin hiçbir yerinde yoktun."
 Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Virgül
 Kesinlik: bağlam
 
 ### NOK-VIRGUL-DE-DA · Tekrarlı bağlaçlarda virgül
-Kural: Tekrarlı bağlaçlar (hem ... hem, ne ... ne, de ... de) arasına ve bağlama görevindeki "de / da"dan sonra virgül konmaz.
+Kural: Tekrarlı bağlaçlar (hem ... hem, ne ... ne, de ... de) arasına ve bağlama görevindeki "de / da"dan sonra virgül konmaz. Ara sözü ayıran virgüller bu kuralın dışındadır (Ben de, açıkçası, bilmiyorum).
 Doğru / yanlış: "İşlerimizden de performansımızdan da onlar sorumlu." / "İşlerimizden de, performansımızdan da, onlar sorumlu."
 Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Virgül
-Kesinlik: bağlamdan bağımsız
+Kesinlik: bağlam
 
 ### NOK-NOKTALI-VIRGUL · Noktalı virgül
 Kural: Ögeleri arasında virgül bulunan sıralı cümleleri ya da tür bakımından ayrılan grupları ayırmak için noktalı virgül kullanılır.
@@ -118,19 +118,19 @@ Kesinlik: bağlam
 ### NOK-UC-NOKTA · Üç nokta
 Kural: Tamamlanmamış cümle ve anlatımın sonunda üç nokta kullanılır. Üç noktanın biçimi ("…" tek karakter ya da "..." üç nokta) eser boyunca aynı olmalıdır.
 Doğru / yanlış: Eser boyunca tek biçim / Aynı eserde "…" ve "..." birlikte
-Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Üç Nokta
+Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Üç Nokta (işaretin kullanımı); tek biçim şartı editoryaldir, TDK kuralı değildir
 Kesinlik: bağlam
 
 ### NOK-TIRNAK · Tırnak işareti
 Kural: Başkasından aktarılan söz tırnak içinde verilir. Tırnağın biçimi (düz ya da kıvrık) eser boyunca aynı olmalıdır.
 Doğru / yanlış: Eser boyunca tek biçim / Aynı eserde “kıvrık” ve "düz" tırnak birlikte
-Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Tırnak İşareti
+Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Tırnak İşareti (işaretin kullanımı); tek biçim şartı editoryaldir, TDK kuralı değildir
 Kesinlik: bağlam
 
 ### NOK-KONUSMA-CIZGISI · Konuşma çizgisi
 Kural: Diyaloglar ya konuşma çizgisiyle (—) ya tırnakla verilir; seçim eser boyunca aynı olmalıdır. Konuşma çizgisi kısa çizgiyle (-) karıştırılmamalıdır.
 Doğru / yanlış: "— Geliyorum, dedi." / "- Geliyorum, dedi." (aynı eserde çizgi ve tırnak karışık)
-Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Uzun Çizgi
+Kaynak: Yazım Kılavuzu, Noktalama İşaretleri, Uzun Çizgi (işaretin kullanımı); tek biçim şartı editoryaldir, TDK kuralı değildir
 Kesinlik: bağlam
 
 ### NOK-SORU · Soru işareti

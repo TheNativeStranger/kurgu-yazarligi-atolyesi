@@ -1,6 +1,6 @@
 {
   "name": "kurgu-yazarligi-atolyesi",
-  "description": "Türkçe yazan her kurgu yazarı için editörlük ve yayın kurulu eklentisi.",
+  "description": "Türkçe kurgu yazarları için TDK imla denetimi eklentisi; masa ve yapı haritası planlanıyor.",
   "owner": {
     "name": "The Native Stranger"
   },
@@ -8,7 +8,7 @@
     {
       "name": "atolye",
       "source": "./",
-      "description": "Kurgu Yazarlığı Atölyesi — Editörlük ve Yayın Kurulu. Eserinizi TDK'ya göre denetler, yapısını Campbell ve Vogler saatinde ve roman haritasında gösterir, yayın yönetmeninin kararıyla en fazla üç öneri sunar. Sizin yerinize yazmaz."
+      "description": "Kurgu Yazarlığı Atölyesi — Türkçe kurgu metninizi TDK'ye göre denetler, alıntılı ve kesinlik etiketli bir imla raporu yazar. Sizin yerinize yazmaz. Masa ve yapı haritası sonraki sürümlerde."
     }
   ]
 }

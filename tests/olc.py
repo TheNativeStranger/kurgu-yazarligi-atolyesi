@@ -2,7 +2,7 @@
 """Redaktörün imla çıktısını beklenen düzeltmelerle karşılaştırır.
 
 Kullanım:
-    python3 tests/olc.py <redaktor.json>... [--beklenen tests/metinler/hatali-30.beklenen.json]
+    python3 tests/olc.py <eser>/atolye/.calisma/gorusler/*.dogrulanmis.json [--beklenen tests/metinler/hatali-30.beklenen.json]
 
 İki hedef ölçülür (BRD, kabul ölçütleri):
     bulma oranı           en az %90
@@ -23,23 +23,36 @@ VARSAYILAN = Path(__file__).resolve().parent / "metinler" / "hatali-30.beklenen.
 
 
 def eslesir(bulgu, hata):
+    """Bulgunun yaptığı değişiklik beklenen düzeltmeyle aynı mı (kısa ya da uzun alıntıyla)."""
     mevcut, oneri = esle(bulgu.get("mevcut")), esle(bulgu.get("oneri"))
     hm, ho = esle(hata["mevcut"]), esle(hata["oneri"])
-    return (hm in mevcut or mevcut in hm) and ho in oneri
+    if not mevcut or bulgu.get("oneri") is None:
+        return False
+    if mevcut in hm:
+        return hm.replace(mevcut, oneri, 1) == ho
+    if hm in mevcut:
+        return mevcut.replace(hm, ho, 1) == oneri
+    return False
+
+
+def tuzaga_dustu(bulgu, tuzak):
+    """Bulgu tuzağı değiştiriyorsa: tuzak mevcutta geçiyor ama öneride aynen kalmıyor."""
+    mevcut, oneri, t = esle(bulgu.get("mevcut")), esle(bulgu.get("oneri")), esle(tuzak)
+    return bool(mevcut) and t in mevcut and t not in oneri
 
 
 def olc(bulgular, beklenen):
     hatalar, tuzaklar = beklenen["hatalar"], beklenen["tuzaklar"]
     bulunan = [h for h in hatalar if any(eslesir(b, h) for b in bulgular)]
-    dogru = [b for b in bulgular if any(eslesir(b, h) for h in hatalar)]
+    tuzak = [b for b in bulgular if any(tuzaga_dustu(b, t) for t in tuzaklar)]
+    dogru = [b for b in bulgular if b not in tuzak and any(eslesir(b, h) for h in hatalar)]
     kesin = [b for b in bulgular if b.get("kesinlik") == "kesin"]
     kesin_dogru = [b for b in kesin if b in dogru]
-    tuzak = [b for b in bulgular if b not in dogru and any(esle(t) in esle(b.get("mevcut")) for t in tuzaklar)]
     return {
         "bulma_orani": len(bulunan) / len(hatalar),
         "kesin_dogrulugu": len(kesin_dogru) / len(kesin) if kesin else 1.0,
         "kacirilan": [h["mevcut"] for h in hatalar if h not in bulunan],
-        "fazladan": [b.get("mevcut") for b in bulgular if b not in dogru],
+        "fazladan": [b.get("mevcut") for b in bulgular if b not in dogru and b not in tuzak],
         "tuzaga_dusen": [b.get("mevcut") for b in tuzak],
     }
 

@@ -2,116 +2,63 @@
 
 *Editörlük ve Yayın Kurulu*
 
-Kurgu Yazarlığı Atölyesi, Türkçe yazan her kurgu yazarına bir yayınevinin editoryal masasını sunan yalın bir Claude eklentisidir. Küçürek öykü, kısa öykü ya da roman: Masa esere göre kurulur, metni okur, TDK'ya göre denetler, yapısını gösterir ve tavsiye verir.
+Türkçe yazan kurgu yazarları için bir Claude eklentisi. Küçürek öykünüzü, kısa öykünüzü ya da roman bölümünüzü TDK'ye göre denetler; her bulguyu metninizden bir alıntıyla gösterir ve bir imla raporu yazar.
 
-**Atölye yazarın yerine yazmaz.** Değerlendirir, gösterir, yön önerir. Eserin son metni her zaman sizin cümlelerinizdir.
+**Atölye yazarın yerine yazmaz.** Değerlendirir, gösterir, doğrusunu ve dayandığı kuralı söyler. Düzeltmeleri siz yaparsınız.
 
-> **Durum: 0.2.0 — imla kipi.** Bu sürümde editör ve redaktör çalışır: Metninizi TDK'ya göre denetler ve bir imla raporu yazar. Masa (bütün kurul), izlenen değişiklikli .docx ve görsel pano sonraki sürümlerde gelecek. Plan aşağıda.
+> **Durum:** İmla denetimi çalışıyor. Masa (bütün yayın kurulu), Word'de izlenen değişiklik ve yapı haritası yolda.
 
-## Kurulum ve komutlar
+## Kurulum
 
-Eklentinin kısa adı `atolye`'dir. Claude Code'da:
+Claude Code'da:
 
 ```
 /plugin marketplace add TheNativeStranger/kurgu-yazarligi-atolyesi
 /plugin install atolye@kurgu-yazarligi-atolyesi
 ```
 
-Komut yazmak zorunda değilsiniz: "Şu bölüme bir bakar mısın?" demeniz yeterli. Kısayol isteyenler için komutlar:
+Açılan ekranda kendiniz için kurmayı seçin. Kurulumdan sonra `/` yazın; listede `/atolye:imla` görünmelidir.
 
-| Komut | Ne yapar | Durum |
-|---|---|---|
-| `/atolye:imla` | Yalnız dil ve imla (TDK) | 0.2.0 ✓ |
-| `/atolye:masa` | Hepsi: imla, bütün masa, kararlar, tavsiyeler ve pano | planlandı |
-| `/atolye:harita` | Yalnız görsel pano, son okumadan | planlandı |
+Bilgisayarınızda **Python 3.9 ya da üstü** kurulu olmalı. Terminalde `python3 --version` (Windows'ta `py -3 --version`) bir sürüm göstermiyorsa python.org'dan kurun; Windows'ta kurulumda "Add to PATH" kutusunu işaretleyin.
 
-Başka bir eklentide aynı adlı komut yoksa `/imla` yazmak da yeter.
+## Kullanım
 
-## İmla kipi nasıl çalışır
+Eserinizin bulunduğu klasörde Claude'a doğal dille söyleyin: "Şu bölümün imlasına bakar mısın?" Ya da kısayolu kullanın: `/atolye:imla bolum-01.docx`
 
-1. **Hazırlık:** Metin bölümlere ayrılır, paragraflar numaralanır, kelimeler sayılır.
-2. **Ön tarama:** Betik sık yazım hatalarını ve tırnak, üç nokta, diyalog biçimi tutarsızlıklarını aday olarak işaretler.
-3. **Redaktör:** Metni baştan sona okur; adayları bağlamda değerlendirir, betiğin yakalayamadığı de / da, ki, şapka, büyük harf, noktalama, dil bilgisi ve süreklilik hatalarını ekler.
-4. **Doğrulama:** Her bulgunun metinde gerçekten geçtiği denetlenir; geçmeyen düşer. Yazım kartınızdaki tercihlere uyan bulgular gösterilmez.
-5. **Sözlük:** Gerekirse doğru biçim Güncel Türkçe Sözlük'te aranır; sözlükte yoksa "kesin" etiketi düşürülür.
-6. **Rapor:** `atolye/raporlar/` altına özet, hata türleri ve düzeltme tablosu yazılır. Sohbette yalnız özet gösterilir.
+- **Okunan biçimler:** .docx, .md, .txt. PDF'in metnini editör kendisi çıkarır.
+- **.doc, Pages ya da Google Dokümanlar:** Önce .docx olarak kaydedin.
 
-Atölye dosyalarınıza dokunmaz. Her şey eserinizin klasöründe `atolye/` altında durur:
+## Ne alırsınız
 
-| Dosya | Ne işe yarar |
-|---|---|
-| `atolye/raporlar/*-imla.md` | İmla raporları |
-| `atolye/yazim-karti.md` | Onayladığınız yazım tercihleri ("Bünyamin Pîrân" gibi); bir daha sorulmaz |
-| `atolye/kimlik.md` | Eserin adı, türü, karakterleri, taslak bölümleri |
-| `atolye/.calisma/` | Ara dosyalar; silinebilir |
+Eserinizin klasöründe `atolye/raporlar/AAAA-AA-GG-imla.md` adlı bir rapor:
 
-## Masa
+- **Özet:** kaç bulgu var, kaçı kesin hata.
+- **Hata türleri:** en sık takıldığınız kurallar, her birinin bir cümlelik açıklamasıyla.
+- **Düzeltme tablosu:** yer, mevcut yazım, öneri, kesinlik ve kural.
+- **Süreklilik notları** ve redaktörün size soruları.
 
-| Koltuk | Yalnız bunu yapar | Yapmaz |
-|---|---|---|
-| **Redaktör ve düzeltmen** (her zaman, ilk) | Yazım, şapka, alıntı kelimeler, ekler ve bağlaçlar, noktalama, dil bilgisi, anlatım bozukluğu, süreklilik | Üsluba karışmaz |
-| Editör | Ses, ritim, tekrar, klişe, belirsiz özne | İmla düzeltmez |
-| Gelişim editörü | Yapı, karakter, tempo, yapı saati | Satıra inmez |
-| Okur | Tepki | Düzeltme önermez |
-| Dosya okuru ve ajans | Devamını ister mi, rafı ne, kime uygun | Metne dokunmaz |
-| Danışman | Olgu, tarih, kültürel ayrıntı | Dile karışmaz |
-| **Yayın yönetmeni** (karar) | Doğrular, en fazla üç karar ve tavsiye verir | Yeni görüş eklemez |
+"Bu bende bilinçli" dediğiniz yazımlar `atolye/yazim-karti.md` dosyasına eklenir ve bir daha sorulmaz. Vazgeçerseniz söylemeniz yeterli.
 
-Masa esere göre kurulur: Küçürek öyküde okur, editör ve redaktör; kısa öyküde gelişim editörü de; romanda gerekirse danışman; bitmiş dosyada dosya okuru ve ajans da masaya oturur.
+## Dosyalarınız ve gizlilik
 
-## Çıktılar (planlanan)
-
-- **Dil ve imla raporu:** TDK kuralına dayalı düzeltme tablosu ve Word'de tek tek kabul ya da ret edilen, izlenen değişiklikli bir .docx.
-- **Masa raporu:** Koltukların görüşleri, en fazla üç karar ve her karar için "ne yapabilirsiniz".
-- **Görsel pano:** Campbell ve Vogler'i iç içe gösteren yapı saati, kurul yorum kartları, roman haritası ve kelime panosu. Tek HTML dosyası, yazdırınca PDF.
-- **Yazım kartı ve karar defteri:** Onayladığınız tercihler bir daha hata diye sorulmaz.
-
-## Yardımcı betik
-
-`scripts/atolye.py` yalnız Python 3.9+ standart kütüphanesini kullanır.
-
-```bash
-# Metni çıkarır, bölümlere ayırır, paragrafları numaralar, kelimeleri sayar
-python3 scripts/atolye.py hazirla bolum-01.docx bolum-02.docx --calisma Eserim/atolye/.calisma
-
-# İmla ön taraması: kurallar/sik-hatalar.tsv ve biçim tutarlılığı
-python3 scripts/atolye.py tara --calisma Eserim/atolye/.calisma
-
-# Redaktörden sonra: alıntı doğrulama, sözlük, rapor
-python3 scripts/atolye.py dogrula --calisma Eserim/atolye/.calisma
-python3 scripts/atolye.py sozluk --calisma Eserim/atolye/.calisma
-python3 scripts/atolye.py rapor --calisma Eserim/atolye/.calisma --cikti Eserim/atolye/raporlar/imla.md
-```
-
-Ön tarama hüküm vermez, yalnız aday üretir; son kararı redaktör bağlamda verir.
-
-## Kurallar
-
-- `kurallar/tdk.md`: Redaktörün kullandığı TDK kuralları, her biri bir kimlikle.
-- `kurallar/sik-hatalar.tsv`: Sık yazım hataları; her satırda desen, kural, öneri, kesinlik ve test örnekleri.
-- `kurallar/yapi-sablonlari.md`: Campbell'ın 17 ve Vogler'in 12 aşaması, üç perdeye hizalı.
-- `kurallar/masa.md`: Türe göre masa kurma kuralları.
-
-## Testler
-
-```bash
-python3 -m unittest discover tests
-
-# Redaktörün gerçek çıktısını ölçmek için (30 bilinen hata + tuzaklar):
-python3 tests/olc.py <eser>/atolye/.calisma/gorusler/redaktor.json
-```
-
-Hedef: bulma oranı en az %90, "kesin" etiketlerinin en az %95'i gerçekten hata, tuzaklarda sıfır yanlış alarm.
+Atölye sizin dosyalarınızı değiştirmez; yazdığı her şey eserinizin klasöründe `atolye/` altında durur. Metniniz Claude tarafından işlenir. Sözlük denetiminde yalnız aranan sözcükler sozluk.gov.tr'ye gönderilir.
 
 ## Yol haritası
 
 1. İskelet ve kural dosyaları ✓
 2. Hazırlık ve imla ön taraması ✓
-3. İmla kipi: editör becerisi, redaktör, sözlük doğrulaması, alıntı doğrulaması ✓
-4. İzlenen değişiklikli .docx
-5. Masa kipi: diğer koltuklar, yayın yönetmeni, karar defteri, masa raporu
-6. Görsel pano: yapı saati, kurul kartları, roman haritası, kelime panosu
+3. İmla kipi: editör, redaktör, sözlük ve alıntı doğrulaması ✓
+4. Word'de izlenen değişiklik olarak düzeltmeler
+5. Masa: okur, editör, gelişim editörü, danışman, dosya okuru ve ajans; yayın yönetmeninin en fazla üç kararı ve tavsiyeleri
+6. Görsel pano: Campbell ve Vogler yapı saati, roman haritası, kelime panosu
 7. Kabul denemesi ve 1.0.0
+
+## Geliştirenler için
+
+- `scripts/atolye.py`: tek yardımcı betik (hazirla, tara, dogrula, sozluk, rapor); yalnız standart kütüphane.
+- `kurallar/tdk.md` ve `kurallar/sik-hatalar.tsv`: redaktörün ve betiğin kuralları. `yapi-sablonlari.md` ve `masa.md` sonraki sürümler içindir.
+- Testler: `python3 -m unittest discover tests`
+- Redaktörü ölçmek: `tests/metinler/hatali-30.txt` dosyasını boş bir klasöre kopyalayıp orada `/atolye:imla hatali-30.txt` çalıştırın, sonra `python3 tests/olc.py <klasör>/atolye/.calisma/gorusler/*.dogrulanmis.json`. Hedef: bulma en az %90, "kesin" doğruluğu en az %95, tuzaklarda sıfır yanlış alarm.
 
 ## Lisans
 

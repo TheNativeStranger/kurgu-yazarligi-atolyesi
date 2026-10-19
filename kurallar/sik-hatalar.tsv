@@ -7,7 +7,7 @@ desen	kural	oneri	kesinlik	not	yakalar	yakalamaz
 \borjinal(\w*)	YAZ-SOZCUK	orijinal\1	kesin		Orjinal baskı.	Orijinal baskı.
 \bmalesef\b	YAZ-SOZCUK	maalesef	kesin		Malesef gelemem.	Maalesef gelemem.
 \btabi ki\b	YAZ-SOZCUK	tabii ki	kesin	tabi: bağımlı	Tabi ki gelirim.	Tabii ki gelirim.
-\btabiki\b	YAZ-SOZCUK	tabii ki	kesin		Tabiki gelirim.	Kurala tabi oldu.
+\btabiki\b	YAZ-SOZCUK	tabii ki	kesin		Tabiki gelirim.	Tabii ki gelirim.
 \beksoz(\w*)	YAZ-SOZCUK	egzoz\1	kesin		Eksoz dumanı.	Egzoz dumanı.
 \bklavuz(\w*)	YAZ-SOZCUK	kılavuz\1	kesin		Yazım klavuzu.	Yazım kılavuzu.
 \blaboratuar(\w*)	YAZ-SOZCUK	laboratuvar\1	kesin		Laboratuara gitti.	Laboratuvara gitti.
@@ -18,22 +18,22 @@ desen	kural	oneri	kesinlik	not	yakalar	yakalamaz
 \bkolleksiyon(\w*)	YAZ-SOZCUK	koleksiyon\1	kesin		Pul kolleksiyonu.	Pul koleksiyonu.
 \bdöküman(\w*)	YAZ-SOZCUK	doküman\1	kesin		Dökümanı okudu.	Dokümanı okudu.
 \bşarz\b	YAZ-SOZCUK	şarj	kesin		Telefonu şarz etti.	Telefonu şarj etti.
-\bmeyva(\w*)	YAZ-SOZCUK	meyve\1	kesin		Meyva suyu.	Meyve suyu.
+\bmeyva\b	YAZ-SOZCUK	meyve	kesin	çekimli biçimleri redaktör değerlendirir	Bir meyva soydu.	Bir meyve soydu.
 \beşkiya(\w*)	YAZ-SOZCUK	eşkıya\1	kesin		Dağda eşkiya vardı.	Dağda eşkıya vardı.
 \bmahçup(\w*)	YAZ-SOZCUK	mahcup\1	kesin		Mahçup oldu.	Mahcup oldu.
 \bcimnastik(\w*)	YAZ-SOZCUK	jimnastik\1	kesin		Cimnastik salonu.	Jimnastik salonu.
 \bşuan\b	YAZ-SOZCUK	şu an	kesin		Şuan evdeyim.	Şu an evdeyim.
 \bpekala\b	YAZ-SOZCUK	pekâlâ	kesin		Pekala, gidelim.	Pekâlâ, gidelim.
 \bdeyil(\w*)	YAZ-SOZCUK	değil\1	buyuk-ihtimal	diyalogda ağız olabilir	Öyle deyil.	Öyle değil.
-\bmakina(\w*)	YAZ-SOZCUK	makine\1	buyuk-ihtimal	diyalogda ağız olabilir	Dikiş makinası.	Dikiş makinesi.
+\bmakina\b	YAZ-SOZCUK	makine	buyuk-ihtimal	diyalogda ağız olabilir; çekimli biçimleri redaktör değerlendirir	Bir makina aldı.	Bir makine aldı.
 \byada\b	YAZ-SOZCUK	ya da	buyuk-ihtimal	yada: bir taş adı	Çay yada kahve.	Çay ya da kahve.
 \bbişey(\w*)	YAZ-BITISIK	bir şey\1	buyuk-ihtimal	diyalogda ağız olabilir	Bişey demedi.	Bir şey demedi.
 \bherşey(\w*)	YAZ-BITISIK	her şey\1	kesin		Herşey yolunda.	Her şey yolunda.
 \bbirşey(\w*)	YAZ-BITISIK	bir şey\1	kesin		Birşeyler oldu.	Bir şeyler oldu.
 \bhiçbirşey(\w*)	YAZ-BITISIK	hiçbir şey\1	kesin		Hiçbirşey yok.	Hiçbir şey yok.
-\bhiç bir\b	YAZ-BITISIK	hiçbir	kesin		Hiç bir yerde.	Hiçbir yerde.
-\bbir kaç(\w*)	YAZ-BITISIK	birkaç\1	kesin		Bir kaç gün.	Birkaç gün.
-\bbir çok(\w*)	YAZ-BITISIK	birçok\1	kesin		Bir çok insan.	Birçok insan.
+\bhiç bir\b	YAZ-BITISIK	hiçbir	buyuk-ihtimal	soruda hiç = bir kez olsun: Hiç bir kitap okudun mu?	Hiç bir yerde.	Hiçbir yerde.
+\bbir kaç\b	YAZ-BITISIK	birkaç	kesin		Bir kaç gün.	Birkaç gün.
+\bbir çok\b	YAZ-BITISIK	birçok	kesin		Bir çok insan.	Birçok insan.
 \bbir çoğu(\w*)	YAZ-BITISIK	birçoğu\1	kesin		Bir çoğu gitti.	Birçoğu gitti.
 \bher hangi\b	YAZ-BITISIK	herhangi	kesin		Her hangi bir gün.	Herhangi bir gün.
 \bherhangibir\b	YAZ-BITISIK	herhangi bir	kesin		Herhangibir şey.	Herhangi bir şey.

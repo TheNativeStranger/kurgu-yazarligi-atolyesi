@@ -1,7 +1,7 @@
 {
   "name": "atolye",
-  "version": "0.2.0",
-  "description": "Kurgu Yazarlığı Atölyesi — Editörlük ve Yayın Kurulu. Okur, editör, gelişim editörü, redaktör, danışman, dosya okuru ve ajans ile yayın yönetmeninden oluşan bir masa. Eserinizi TDK'ya göre denetler, yapısını Campbell ve Vogler saatinde ve roman haritasında gösterir, en fazla üç karar ve tavsiye sunar. Sizin yerinize yazmaz.",
+  "version": "0.2.1",
+  "description": "Kurgu Yazarlığı Atölyesi — Türkçe kurgu metninizi TDK'ye göre denetler, alıntılı ve kesinlik etiketli bir imla raporu yazar. Sizin yerinize yazmaz. Masa ve yapı haritası sonraki sürümlerde.",
   "author": {
     "name": "The Native Stranger"
   },
@@ -17,7 +17,6 @@
     "TDK",
     "imla",
     "yayın kurulu",
-    "yazarlık",
-    "yapı haritası"
+    "yazarlık"
   ]
 }

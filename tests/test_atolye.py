@@ -56,8 +56,8 @@ class TurkceHarf(unittest.TestCase):
         self.assertEqual(atolye.tr_kucuk("IŞIK İzmir"), "ışık izmir")
 
     def test_harf_durumu_tasinir(self):
-        self.assertEqual(atolye.harf_durumunu_tasi("İnşaallah", "inşallah"), "İnşallah")
-        self.assertEqual(atolye.harf_durumunu_tasi("TDK'nın", "tdk'nin"), "TDK'nin")
+        self.assertEqual(atolye.oneri_bicimle("İnşaallah", "inşallah"), "İnşallah")
+        self.assertEqual(atolye.oneri_bicimle("TDK'nın", "tdk'nin"), "TDK'nin")
 
 
 class Hazirla(unittest.TestCase):
@@ -237,13 +237,12 @@ class ImlaAkisi(unittest.TestCase):
         self.calisma = self.atolye / ".calisma"
         atolye.hazirla([METINLER / "hatali-30.txt"], self.calisma)
         self.paragraflar = atolye.paragraflari_yukle(self.calisma)
-        (self.calisma / "gorusler").mkdir()
 
     def tearDown(self):
         self.gecici.cleanup()
 
     def yer(self, metin):
-        return next((b, p) for p, (b, m) in self.paragraflar.items() if atolye.esle(metin) in m)
+        return next((b, p) for p, (b, m) in self.paragraflar.items() if atolye.esle(metin, True) in atolye.esle(m, True))
 
     def kusursuz_gorus(self, ekler=(), bulgular=()):
         imla = []
@@ -298,7 +297,7 @@ class ImlaAkisi(unittest.TestCase):
         atolye.dogrula(self.calisma)
 
         cagrilar = []
-        cevaplar = {"inşallah": "var", "kâğıt": "yok", "selamünaleyküm": "erisilemedi"}
+        cevaplar = {"inşallah": "var", "selamünaleyküm": "yok", "kâğıt": "erisilemedi"}
 
         def sahte(kelime):
             cagrilar.append(kelime)
@@ -308,11 +307,11 @@ class ImlaAkisi(unittest.TestCase):
         self.assertEqual(sayilar, {"var": 1, "yok": 1, "erisilemedi": 1, "indirildi": 1})
         imla = {b["mevcut"]: b for b in json.loads(
             (self.calisma / "gorusler" / "redaktor.dogrulanmis.json").read_text(encoding="utf-8"))["imla"]}
-        self.assertEqual(imla["kağıt"]["kesinlik"], "buyuk-ihtimal")
-        self.assertEqual(imla["Selamün aleyküm"]["kesinlik"], "kesin")
+        self.assertEqual(imla["Selamün aleyküm"]["kesinlik"], "buyuk-ihtimal")
+        self.assertEqual(imla["kağıt"]["kesinlik"], "kesin")
         # Erişilemeyen kelime önbelleğe girmez, bulunanlar girer.
         atolye.sozluk(self.calisma, getir=sahte, bekleme=0)
-        self.assertEqual(sorted(cagrilar), ["inşallah", "kâğıt", "selamünaleyküm", "selamünaleyküm"])
+        self.assertEqual(sorted(cagrilar), ["inşallah", "kâğıt", "kâğıt", "selamünaleyküm"])
 
     def test_rapor(self):
         self.kusursuz_gorus(bulgular=[{"baslik": "Saat çelişkisi", "aciklama": "Aynı sabah.",
@@ -367,6 +366,71 @@ class Olcum(unittest.TestCase):
             yakalanan = [a for a in adaylar if a["gorulen"].strip() and atolye.esle(a["gorulen"]) in atolye.esle(tuzak)]
             self.assertFalse(yakalanan, tuzak)
 
+
+
+class GozdenGecirmeDuzeltmeleri(unittest.TestCase):
+    """Gözden geçirmede bulunan hataların geri gelmemesi için."""
+
+    def setUp(self):
+        self.gecici = tempfile.TemporaryDirectory()
+        self.dizin = Path(self.gecici.name)
+
+    def tearDown(self):
+        self.gecici.cleanup()
+
+    def test_word_duz_metni_sahneleri_birlestirmez(self):
+        uzun = "Kapıyı kapattı ve mutfağa geçti; tencerenin kapağını kaldırıp uzun uzun baktı, sonra hiçbir şey söylemeden çıktı."
+        kaynak = self.dizin / "a.txt"
+        kaynak.write_text(f"BÖLÜM 1\n— Geldin mi, dedi annem.\n{uzun}\n\nErtesi sabah yağmur yağıyordu.\n", encoding="utf-8")
+        eser = atolye.hazirla([kaynak], self.dizin / "c")
+        self.assertEqual(eser["paragraf_sayisi"], 3)
+
+    def test_baslik_desenleri(self):
+        for metin in ["BİRİNCİ BÖLÜM", "On İkinci Bölüm", "II", "— 3 —", "1"]:
+            self.assertIsNotNone(atolye.baslik_coz(metin, False), metin)
+        for metin in ["Bölüm 2'deki hemşire bana baktı ve güldü.", "Bölüm 3 kapanınca bütün hastalar bahçeye çıkarıldı, kimse bilmiyordu."]:
+            self.assertIsNone(atolye.baslik_coz(metin, False), metin)
+
+    def test_bom_ve_windows_kodlamasi_ve_bozuk_docx(self):
+        (self.dizin / "bom.md").write_bytes("\ufeff# Başlık\n\nMetin burada.\n".encode("utf-8"))
+        self.assertEqual(atolye.hazirla([self.dizin / "bom.md"], self.dizin / "c")["bolumler"][0]["baslik"], "Başlık")
+        (self.dizin / "ansi.txt").write_bytes("Çocuk ağladı.".encode("cp1254"))
+        self.assertEqual(atolye.hazirla([self.dizin / "ansi.txt"], self.dizin / "c")["toplam_kelime"], 2)
+        (self.dizin / "bozuk.docx").write_text("x", encoding="utf-8")
+        with self.assertRaises(atolye.AtolyeHatasi):
+            atolye.hazirla([self.dizin / "bozuk.docx"], self.dizin / "c")
+
+    def test_yer_bul_kelime_siniri_ve_belirsizlik(self):
+        paragraflar = {1: (1, "Bende gelirim."), 2: (1, "Bende kalsın."), 3: (1, "Halası geldi.")}
+        self.assertIsNone(atolye.yer_bul("ende", 1, 9, paragraflar))
+        self.assertIsNone(atolye.yer_bul("Bende", 1, 9, paragraflar))
+        self.assertEqual(atolye.yer_bul("Bende", 1, 2, paragraflar), (1, 2))
+        self.assertIsNone(atolye.yer_bul("hala", 1, 9, paragraflar))
+
+    def test_yazim_karti_kelime_duzeyinde(self):
+        kart = [{"bünyamin", "pîrân"}, {"bi"}]
+        self.assertTrue(atolye.kartta_mi("Pîrân'a kimse", "Piran'a kimse", kart))
+        self.assertFalse(atolye.kartta_mi("bir kaç dakika", "birkaç dakika", kart))
+
+    def test_koltuk_adi_rapordan_bulgu_dusurmez(self):
+        kaynak = self.dizin / "a.txt"
+        kaynak.write_text("Herkez geldi.", encoding="utf-8")
+        calisma = self.dizin / "atolye" / ".calisma"
+        atolye.hazirla([kaynak], calisma)
+        (calisma / "gorusler" / "redaktor.json").write_text(json.dumps({"koltuk": "redaktör", "imla": [
+            {"kural": "YAZ-SOZCUK", "bolum": 1, "paragraf": 1, "mevcut": "Herkez", "oneri": "Herkes", "kesinlik": "kesin"}]}),
+            encoding="utf-8")
+        atolye.dogrula(calisma)
+        self.assertEqual(atolye.rapor(calisma, self.dizin / "r.md")["bulgu"], 1)
+        # Yeniden hazırlık eski görüşleri temizler.
+        atolye.hazirla([kaynak], calisma)
+        self.assertEqual(list((calisma / "gorusler").iterdir()), [])
+
+    def test_kivrik_kesme_ve_buyuk_harf_onerisi(self):
+        kurallar = atolye.sik_hatalari_yukle()
+        self.assertEqual([a["oneri"] for a in atolye.paragraf_tara("Türkçe’de böyle.", kurallar)], ["Türkçede"])
+        self.assertEqual([a["oneri"] for a in atolye.paragraf_tara("HERŞEY BİTTİ", kurallar)], ["HER ŞEY"])
+        self.assertEqual(atolye.paragraf_tara("Bir kaçak yakalandı.", kurallar), [])
 
 class KomutSatiri(unittest.TestCase):
     def test_hata_kodu(self):

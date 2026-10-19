@@ -6,11 +6,11 @@ numaralama, kelime sayma, imla ön taraması, sözlük sorgusu, alıntı
 doğrulama ve imla raporu. Yalnız Python standart kütüphanesini kullanır.
 
 Kullanım:
-    atolye.py hazirla <dosya>... --calisma <eser>/atolye/.calisma
+    atolye.py hazirla <dosya>... --calisma <eser>/atolye/.calisma [--kimlik <eser>/atolye/kimlik.md]
     atolye.py tara --calisma <eser>/atolye/.calisma
+    atolye.py dogrula --calisma <eser>/atolye/.calisma
     atolye.py sozluk --calisma <eser>/atolye/.calisma
-    atolye.py dogrula --calisma <eser>/atolye/.calisma [--atolye <eser>/atolye]
-    atolye.py rapor --calisma <eser>/atolye/.calisma --cikti <dosya.md>
+    atolye.py rapor --calisma <eser>/atolye/.calisma --cikti <dosya.md> [--eser <ad>]
 """
 
 import argparse
@@ -18,7 +18,6 @@ import datetime
 import json
 import re
 import shutil
-import subprocess
 import sys
 import time
 import unicodedata
@@ -34,18 +33,34 @@ KOK = Path(__file__).resolve().parent.parent
 KURALLAR = KOK / "kurallar"
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
+# Bu alt ağaçlardaki metin belgede görünmez: yedek kopya, silinen ve taşınmadan önceki metin.
+DOCX_ATLA = {MC + "Fallback", W + "del", W + "moveFrom"}
 
 KELIME = re.compile(r"[^\W_]+(?:['’\-][^\W_]+)*")
 
+# "BÖLÜM 3", "Bölüm III", "BÖLÜM 3: Kaçış" — sayıdan sonra yalnız boşluk, satır sonu ya da ayraç
 BOLUM_DESENLERI = [
-    # "BÖLÜM 3", "Bölüm III", "BÖLÜM 3: Kaçış"
-    re.compile(r"^\s*b[öo]l[üu]m\s+(\d+|[ivxlc]+)\b\s*[.:\-–—]?\s*(.*)$", re.I),
-    # "3. Bölüm", "3. Bölüm: Kaçış"
-    re.compile(r"^\s*(\d+)\s*\.\s*b[öo]l[üu]m\b\s*[.:\-–—]?\s*(.*)$", re.I),
+    re.compile(r"^b[öo]l[üu]m\s+(\d+|[ivxlc]+)(?=$|\s|[.:\-–—])\s*[.:\-–—]?\s*(.*)$", re.I),
+    re.compile(r"^(\d+)\s*\.\s*b[öo]l[üu]m(?=$|\s|[.:\-–—])\s*[.:\-–—]?\s*(.*)$", re.I),
 ]
+# "Birinci Bölüm", "ON İKİNCİ BÖLÜM: Dönüş" (Türkçe küçültülmüş metinde aranır)
+SIRALI_BOLUM = re.compile(
+    r"^((on|yirmi|otuz|kırk|elli)\s+)?(birinci|ikinci|üçüncü|dördüncü|beşinci|altıncı|yedinci|sekizinci|"
+    r"dokuzuncu|onuncu|yirminci|otuzuncu|kırkıncı|ellinci)\s+bölüm\s*[.:\-–—]?\s*(?P<ad>.*)$"
+)
+# Satırın tamamı bir sayı ya da Roma rakamı: "1", "II.", "— 3 —"
+TEK_NUMARA = re.compile(r"^[—–-]?\s*(\d{1,3}|[IVXLC]+)\.?\s*[—–-]?$")
 # "1 İstanbul", "2. Vertigo", "10 – Hatırlayış": yalnız kısa ve noktalamasız satırlarda
 NUMARALI_BASLIK = re.compile(r"^\s*(\d{1,3})\s*[.:\-–—]?\s+(\S.*)$")
 BASLIK_STILLERI = {"heading 1", "heading 2", "title", "başlık 1", "başlık 2", "konu başlığı"}
+DESTEKSIZ = {
+    ".pdf": "PDF'in metnini okuyup .txt olarak verin.",
+    ".doc": "Word'de 'Farklı Kaydet → Word Belgesi (.docx)' ile kaydedin.",
+    ".odt": "'Farklı Kaydet → Word Belgesi (.docx)' ile kaydedin.",
+    ".rtf": "Word'de 'Farklı Kaydet → Word Belgesi (.docx)' ile kaydedin.",
+    ".pages": "Pages'te 'Dosya → Dışa Aktar → Word' ile .docx olarak kaydedin.",
+}
 
 
 class AtolyeHatasi(Exception):
@@ -59,16 +74,20 @@ def tr_kucuk(metin):
     return metin.replace("İ", "i").replace("I", "ı").lower()
 
 
-def tr_buyuk_harf(harf):
-    return {"i": "İ", "ı": "I"}.get(harf, harf.upper())
+def tr_buyuk(metin):
+    return metin.replace("i", "İ").replace("ı", "I").upper()
 
 
-def harf_durumunu_tasi(kaynak, hedef):
-    """Kaynakta büyük olan konumları hedefte de büyütür."""
-    return "".join(
-        tr_buyuk_harf(h) if i < len(kaynak) and kaynak[i].isupper() else h
-        for i, h in enumerate(hedef)
-    )
+def oneri_bicimle(gorulen, oneri):
+    """Önerinin büyük harflerini görülen metne uydurur."""
+    harfler = [h for h in gorulen if h.isalpha()]
+    if len(harfler) > 1 and all(h.isupper() for h in harfler):
+        return tr_buyuk(oneri)
+    if len(gorulen) == len(oneri):
+        return "".join(tr_buyuk(h) if gorulen[i].isupper() else h for i, h in enumerate(oneri))
+    if gorulen[:1].isupper():
+        return tr_buyuk(oneri[:1]) + oneri[1:]
+    return oneri
 
 
 def kelime_say(metin):
@@ -77,108 +96,187 @@ def kelime_say(metin):
 
 # Kaynak okuma
 
-def _stil_adlari(zf):
-    try:
-        kok = ET.fromstring(zf.read("word/styles.xml"))
-    except KeyError:
-        return {}
-    adlar = {}
-    for stil in kok.iter(W + "style"):
-        ad = stil.find(W + "name")
-        if ad is not None:
-            adlar[stil.get(W + "styleId")] = ad.get(W + "val", "").lower()
-    return adlar
-
-
-def _paragraf_metni(p):
-    parcalar = []
-    for el in p.iter():
-        if el.tag == W + "t":
-            parcalar.append(el.text or "")
-        elif el.tag == W + "tab":
-            parcalar.append("\t")
-        elif el.tag in (W + "br", W + "cr"):
-            parcalar.append(" ")
-    return "".join(parcalar)
-
-
-def docx_oku(yol):
-    """(metin, baslik_mi, kaynak_sirasi) üçlüleri döner."""
-    with zipfile.ZipFile(yol) as zf:
+def metin_oku(yol):
+    """Düz metin dosyasını okur: BOM'a göre UTF-8 ya da UTF-16, yoksa UTF-8, olmazsa Windows-1254."""
+    ham = yol.read_bytes()
+    if ham.startswith(b"\xef\xbb\xbf"):
+        return ham[3:].decode("utf-8", errors="replace")
+    if ham.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return ham.decode("utf-16")
+    for kodlama in ("utf-8", "cp1254"):
         try:
-            belge = ET.fromstring(zf.read("word/document.xml"))
-        except KeyError:
-            raise AtolyeHatasi(f"{yol.name} geçerli bir .docx değil: word/document.xml yok.")
-        stiller = _stil_adlari(zf)
-    govde = belge.find(W + "body")
-    satirlar = []
-    for sira, p in enumerate(govde.iter(W + "p")):
-        ppr = p.find(W + "pPr")
-        baslik = False
-        if ppr is not None:
-            stil = ppr.find(W + "pStyle")
-            if stil is not None and stiller.get(stil.get(W + "val"), "") in BASLIK_STILLERI:
-                baslik = True
-            seviye = ppr.find(W + "outlineLvl")
-            if seviye is not None and seviye.get(W + "val") in ("0", "1"):
-                baslik = True
-        satirlar.append((_paragraf_metni(p), baslik, sira))
-    return satirlar
+            return ham.decode(kodlama)
+        except UnicodeDecodeError:
+            continue
+    raise AtolyeHatasi(f"{yol.name} okunamadı: kodlaması tanınmadı. Word'de 'Düz metin (UTF-8)' olarak kaydedin.")
 
 
-def md_oku(yol):
-    satirlar = []
-    paragraf = []
-    for sira, satir in enumerate(yol.read_text(encoding="utf-8").splitlines()):
-        m = re.match(r"^(#{1,2})\s+(.*)$", satir)
-        if m:
-            if paragraf:
-                satirlar.append((" ".join(paragraf), False, sira))
-                paragraf = []
-            satirlar.append((m.group(2), True, sira))
-        elif satir.strip():
-            paragraf.append(satir.strip())
-        elif paragraf:
-            satirlar.append((" ".join(paragraf), False, sira))
-            paragraf = []
-    if paragraf:
-        satirlar.append((" ".join(paragraf), False, sira))
-    return satirlar
+def paragraflara_bol(satirlar):
+    """Satırları paragraflara toplar.
+
+    Word'ün düz metin çıktısında her paragraf tek satırdır; elle sarılmış metinde ise
+    paragraflar boş satırla ayrılır. Diyalog çizgisiyle başlayan satır ve bölüm başlığı
+    her durumda yeni paragraftır. Satırların iç boşluklarına dokunulmaz.
+    """
+    satirlar = [s.strip() for s in satirlar]
+    dolu = [i for i, s in enumerate(satirlar) if s]
+    ara_bos = bool(dolu) and any(not s for s in satirlar[dolu[0]:dolu[-1]])
+    satir_satir = not ara_bos or any(len(s) > 100 for s in satirlar)
+    paragraflar, birikim = [], []
+
+    def bitir():
+        if birikim:
+            paragraflar.append(" ".join(birikim))
+            birikim.clear()
+
+    for satir in satirlar:
+        if not satir:
+            bitir()
+            continue
+        yalniz = satir_satir or baslik_coz(satir, False) is not None
+        if yalniz or re.match(r"^(—|–|- )", satir):
+            bitir()
+        birikim.append(satir)
+        if yalniz:
+            bitir()
+    bitir()
+    return paragraflar
 
 
 def txt_oku(yol):
-    metin = yol.read_text(encoding="utf-8")
-    # Boş satırla ayrılmışsa paragraf boş satırdır; değilse her satır bir paragraftır.
-    if re.search(r"\n\s*\n", metin):
-        bloklar = re.split(r"\n\s*\n", metin)
-        return [(" ".join(b.split()), False, i) for i, b in enumerate(bloklar)]
-    return [(s, False, i) for i, s in enumerate(metin.splitlines())]
+    return [(p, False, i) for i, p in enumerate(paragraflara_bol(metin_oku(yol).splitlines()))]
 
 
-def pdf_oku(yol):
-    if not shutil.which("pdftotext"):
-        raise AtolyeHatasi(
-            f"{yol.name} bir PDF. Önce metnini çıkarıp .txt olarak verin "
-            "(Claude'un okuma aracıyla ya da pdftotext ile)."
-        )
-    sonuc = subprocess.run(["pdftotext", "-layout", str(yol), "-"], capture_output=True, text=True)
-    if sonuc.returncode != 0:
-        raise AtolyeHatasi(f"{yol.name} okunamadı: {sonuc.stderr.strip()}")
-    return [(" ".join(b.split()), False, i) for i, b in enumerate(re.split(r"\n\s*\n", sonuc.stdout))]
+def md_oku(yol):
+    """# ve ## bölüm başlığıdır; daha derin başlıklar atlanır."""
+    sonuc, parca = [], []
+
+    def bosalt():
+        for p in paragraflara_bol(parca):
+            sonuc.append((p, False, len(sonuc)))
+        parca.clear()
+
+    for satir in metin_oku(yol).splitlines():
+        m = re.match(r"^\s*(#{1,6})\s+(.*)$", satir)
+        if m:
+            bosalt()
+            if len(m.group(1)) <= 2:
+                sonuc.append((m.group(2).strip(), True, len(sonuc)))
+            continue
+        parca.append(satir)
+    bosalt()
+    return sonuc
 
 
-OKUYUCULAR = {".docx": docx_oku, ".md": md_oku, ".txt": txt_oku, ".pdf": pdf_oku}
+def _docx_ac(yol):
+    try:
+        zf = zipfile.ZipFile(yol)
+        belge = ET.fromstring(zf.read("word/document.xml"))
+        return zf, belge
+    except (zipfile.BadZipFile, KeyError, ET.ParseError):
+        raise AtolyeHatasi(f"{yol.name} açılamadı: .docx değil ya da bozuk. Eski .doc ise Word'de .docx olarak kaydedin.")
+
+
+def _stil_adlari(zf):
+    try:
+        kok = ET.fromstring(zf.read("word/styles.xml"))
+    except (KeyError, ET.ParseError):
+        return {}
+    return {s.get(W + "styleId"): s.find(W + "name").get(W + "val", "").lower()
+            for s in kok.iter(W + "style") if s.find(W + "name") is not None}
+
+
+def _paragraf_metni(p):
+    """Paragrafın görünen metni ve içindeki metin kutuları (ayrı paragraf olarak okunur)."""
+    parcalar, kutular = [], []
+
+    def gez(el):
+        for c in el:
+            if c.tag in DOCX_ATLA:
+                continue
+            if c.tag == W + "txbxContent":
+                kutular.append(c)
+                continue
+            if c.tag == W + "t":
+                parcalar.append(c.text or "")
+            elif c.tag == W + "tab":
+                parcalar.append("\t")
+            elif c.tag in (W + "br", W + "cr"):
+                parcalar.append(" ")
+            elif c.tag == W + "noBreakHyphen":
+                parcalar.append("-")
+            gez(c)
+
+    gez(p)
+    return "".join(parcalar), kutular
+
+
+def docx_oku(yol):
+    """(metin, başlık mı, sıra) üçlüleri döner."""
+    zf, belge = _docx_ac(yol)
+    with zf:
+        stiller = _stil_adlari(zf)
+    satirlar = []
+
+    def baslik_mi(p):
+        ppr = p.find(W + "pPr")
+        if ppr is None:
+            return False
+        stil = ppr.find(W + "pStyle")
+        seviye = ppr.find(W + "outlineLvl")
+        return ((stil is not None and stiller.get(stil.get(W + "val"), "") in BASLIK_STILLERI)
+                or (seviye is not None and seviye.get(W + "val") in ("0", "1")))
+
+    def gez(el):
+        for c in el:
+            if c.tag in DOCX_ATLA:
+                continue
+            if c.tag == W + "p":
+                metin, kutular = _paragraf_metni(c)
+                satirlar.append((metin, baslik_mi(c), len(satirlar)))
+                for kutu in kutular:
+                    gez(kutu)
+            else:
+                gez(c)
+
+    gez(belge.find(W + "body"))
+    return satirlar
+
+
+def docx_dipnot_say(yol):
+    """Okunmayan dipnot ve sonnotların sayısı (ayraç kayıtları hariç)."""
+    zf, _ = _docx_ac(yol)
+    sayi = 0
+    with zf:
+        for parca, etiket in (("word/footnotes.xml", "footnote"), ("word/endnotes.xml", "endnote")):
+            try:
+                kok = ET.fromstring(zf.read(parca))
+            except (KeyError, ET.ParseError):
+                continue
+            sayi += sum(1 for n in kok.iter(W + etiket)
+                        if n.get(W + "type") in (None, "normal") and "".join(t.text or "" for t in n.iter(W + "t")).strip())
+    return sayi
+
+
+OKUYUCULAR = {".docx": docx_oku, ".md": md_oku, ".txt": txt_oku}
 
 
 # Bölümleme
 
 def baslik_coz(metin, stilli):
-    """Başlıksa (baslik, numara_var_mi) döner; değilse None."""
+    """Başlıksa (başlık metni, numaralı mı) döner; değilse None."""
     metin = metin.strip()
-    for desen in BOLUM_DESENLERI:
-        m = desen.match(metin)
+    if TEK_NUMARA.match(metin):
+        return "", True
+    kisa = len(metin.split()) <= 8 and not re.search(r"[.!?…,;]$", metin)
+    if kisa:
+        for desen in BOLUM_DESENLERI:
+            m = desen.match(metin)
+            if m:
+                return m.group(2).strip(), True
+        m = SIRALI_BOLUM.match(tr_kucuk(metin))
         if m:
-            return m.group(2).strip(), True
+            return metin[m.start("ad"):].strip(), True
     m = NUMARALI_BASLIK.match(metin)
     if (m and len(metin.split()) <= 6 and m.group(2)[0].isupper()
             and not re.search(r"[.!?…:;,\"“”]$", metin)):
@@ -189,51 +287,69 @@ def baslik_coz(metin, stilli):
 
 
 def kimlik_turleri(kimlik_yolu):
-    """kimlik.md'deki 'Taslak ve not bölümleri' satırından {bolum_no: tur} çıkarır."""
+    """kimlik.md'deki 'Taslak ve not bölümleri' satırı: ({bölüm no: tür}, satır var mı).
+
+    Satır soldan sağa okunur; sayılar ve aralıklar biriktirilir, 'taslak' ya da 'not'
+    kelimesine gelince o türe atanır: "3, 5 taslak; 9 not", "2-4 taslak ve 7 not".
+    """
     turler = {}
-    if not kimlik_yolu or not kimlik_yolu.exists():
-        return turler
-    for satir in kimlik_yolu.read_text(encoding="utf-8").splitlines():
-        if not tr_kucuk(satir).lstrip("- ").startswith("taslak ve not"):
+    if not kimlik_yolu or not Path(kimlik_yolu).exists():
+        return turler, False
+    var = False
+    for satir in metin_oku(Path(kimlik_yolu)).splitlines():
+        if not tr_kucuk(satir).lstrip("-* ").startswith("taslak ve not"):
             continue
-        deger = satir.split(":", 1)[-1]
-        for parca in re.split(r"[;,]", deger):
-            m = re.search(r"(\d+)\s*(?:[-–—]\s*(\d+))?\s*(taslak|not)", tr_kucuk(parca))
-            if m:
-                bas, son = int(m.group(1)), int(m.group(2) or m.group(1))
-                for no in range(bas, son + 1):
-                    turler[no] = m.group(3)
-    return turler
+        var = True
+        birikim = []
+        for m in re.finditer(r"(\d+)\s*(?:[-–—]\s*(\d+))?|(taslak|not)", tr_kucuk(satir.split(":", 1)[-1])):
+            if m.group(3):
+                turler.update({no: m.group(3) for no in birikim})
+                birikim = []
+            else:
+                birikim.extend(range(int(m.group(1)), int(m.group(2) or m.group(1)) + 1))
+    return turler, var
 
 
 def tur_bul(baslik):
-    kucuk = tr_kucuk(baslik)
-    if re.search(r"\btaslak\b", kucuk):
-        return "taslak"
-    if re.search(r"\bnot(lar|ları)?\b", kucuk):
-        return "not"
-    return "duzyazi"
+    """Kimlikte bilgi yoksa: yalnız 'Taslak: …' ya da 'Notlar' biçimindeki başlıklar."""
+    m = re.match(r"^(taslak|notlar?)\s*([:\-–—]|$)", tr_kucuk(baslik.strip()))
+    return ("taslak" if m.group(1) == "taslak" else "not") if m else "duzyazi"
+
+
+def calisma_temizle(calisma):
+    """Önceki okumadan kalan ara dosyaları siler; sözlük önbelleği kalır."""
+    for ad in ("metin", "gorusler"):
+        if (calisma / ad).exists():
+            shutil.rmtree(calisma / ad)
+    for ad in ("adaylar.json", "dogrulama.json", "imla.json"):
+        (calisma / ad).unlink(missing_ok=True)
 
 
 def hazirla(dosyalar, calisma, kimlik=None):
     calisma = Path(calisma)
+    calisma_temizle(calisma)
     metin_klasoru = calisma / "metin"
-    if metin_klasoru.exists():
-        shutil.rmtree(metin_klasoru)
     metin_klasoru.mkdir(parents=True)
+    (calisma / "gorusler").mkdir()
 
-    kimlikteki_turler = kimlik_turleri(Path(kimlik) if kimlik else None)
+    kimlikteki_turler, kimlikte_var = kimlik_turleri(kimlik)
     bolumler = []
     paragraf_no = 0
+    dipnot = 0
 
     for dosya_sirasi, dosya in enumerate(dosyalar):
         yol = Path(dosya)
         if not yol.exists():
             raise AtolyeHatasi(f"Dosya bulunamadı: {yol}")
-        okuyucu = OKUYUCULAR.get(yol.suffix.lower())
+        uzanti = yol.suffix.lower()
+        if uzanti in DESTEKSIZ:
+            raise AtolyeHatasi(f"{yol.name} doğrudan okunamıyor. {DESTEKSIZ[uzanti]}")
+        okuyucu = OKUYUCULAR.get(uzanti)
         if okuyucu is None:
-            raise AtolyeHatasi(f"{yol.name}: desteklenmeyen biçim (.docx, .md, .txt ya da .pdf olmalı).")
+            raise AtolyeHatasi(f"{yol.name}: desteklenmeyen biçim (.docx, .md ya da .txt olmalı).")
         satirlar = okuyucu(yol)
+        if uzanti == ".docx":
+            dipnot += docx_dipnot_say(yol)
 
         mevcut = None
         for metin, stilli, sira in satirlar:
@@ -247,39 +363,25 @@ def hazirla(dosyalar, calisma, kimlik=None):
                 continue
             if mevcut is None:
                 # Başlıksız dosya ya da ilk başlıktan önceki metin
-                mevcut = {"baslik": "", "dosya": yol.name, "paragraflar": [], "basliksiz": True}
+                mevcut = {"baslik": "", "dosya": yol.name, "paragraflar": []}
                 bolumler.append(mevcut)
             paragraf_no += 1
             mevcut["paragraflar"].append({"p": paragraf_no, "metin": metin, "kaynak": dosya_sirasi, "k": sira})
 
-    bolumler = [b for b in bolumler if b["paragraflar"] or b["baslik"]]
+    # Kitap adı, içindekiler satırı gibi metni olmayan başlıklar bölüm sayılmaz.
+    bolumler = [b for b in bolumler if b["paragraflar"]]
     if not bolumler:
         raise AtolyeHatasi("Kaynak dosyalarda metin bulunamadı.")
 
     ozet = []
     for no, bolum in enumerate(bolumler, start=1):
-        tur = kimlikteki_turler.get(no) or tur_bul(bolum["baslik"])
+        tur = kimlikteki_turler.get(no, "duzyazi") if kimlikte_var else tur_bul(bolum["baslik"])
         kelime = sum(kelime_say(p["metin"]) for p in bolum["paragraflar"])
-        kayit = {
-            "no": no,
-            "baslik": bolum["baslik"],
-            "tur": tur,
-            "kelime": kelime,
-            "paragraflar": bolum["paragraflar"],
-        }
-        (metin_klasoru / f"bolum-{no:02d}.json").write_text(
-            json.dumps(kayit, ensure_ascii=False, indent=1), encoding="utf-8"
-        )
+        kayit = {"no": no, "baslik": bolum["baslik"], "tur": tur, "kelime": kelime, "paragraflar": bolum["paragraflar"]}
+        (metin_klasoru / f"bolum-{no:02d}.json").write_text(json.dumps(kayit, ensure_ascii=False, indent=1), encoding="utf-8")
         ps = bolum["paragraflar"]
-        ozet.append({
-            "no": no,
-            "baslik": bolum["baslik"],
-            "tur": tur,
-            "kelime": kelime,
-            "ilk_paragraf": ps[0]["p"] if ps else None,
-            "son_paragraf": ps[-1]["p"] if ps else None,
-            "dosya": bolum["dosya"],
-        })
+        ozet.append({"no": no, "baslik": bolum["baslik"], "tur": tur, "kelime": kelime,
+                     "ilk_paragraf": ps[0]["p"], "son_paragraf": ps[-1]["p"], "dosya": bolum["dosya"]})
 
     eser = {
         "surum": SURUM,
@@ -288,6 +390,7 @@ def hazirla(dosyalar, calisma, kimlik=None):
         "toplam_kelime": sum(b["kelime"] for b in ozet),
         "duzyazi_kelime": sum(b["kelime"] for b in ozet if b["tur"] == "duzyazi"),
         "paragraf_sayisi": paragraf_no,
+        "okunmayan_dipnot": dipnot,
     }
     (metin_klasoru / "eser.json").write_text(json.dumps(eser, ensure_ascii=False, indent=1), encoding="utf-8")
     return eser
@@ -313,25 +416,20 @@ def sik_hatalari_yukle(yol=None):
 
 
 def paragraf_tara(metin, kurallar):
-    kucuk = tr_kucuk(metin)
+    # Kıvrık kesme (’) düz kesme gibi aranır; uzunluk değişmediği için konumlar korunur.
+    kucuk = tr_kucuk(metin).replace("’", "'")
     adaylar = []
     for kural in kurallar:
         for m in kural["desen_derli"].finditer(kucuk):
             gorulen = metin[m.start():m.end()]
-            adaylar.append({
-                "kural": kural["kural"],
-                "bas": m.start(),
-                "son": m.end(),
-                "gorulen": gorulen,
-                "oneri": harf_durumunu_tasi(gorulen, m.expand(tr_kucuk(kural["oneri"]))),
-                "kesinlik": kural["kesinlik"],
-                "kaynak": "sik-hatalar",
-            })
-    for m in re.finditer(r"(?<=\S) {2,}(?=\S)", metin):
-        adaylar.append({
-            "kural": "NOK-BOSLUK", "bas": m.start(), "son": m.end(), "gorulen": m.group(),
-            "oneri": " ", "kesinlik": "kesin", "kaynak": "yerlesik",
-        })
+            oneri = oneri_bicimle(gorulen, m.expand(tr_kucuk(kural["oneri"])))
+            if "’" in gorulen:
+                oneri = oneri.replace("'", "’")
+            adaylar.append({"kural": kural["kural"], "bas": m.start(), "son": m.end(), "gorulen": gorulen,
+                            "oneri": oneri, "kesinlik": kural["kesinlik"], "kaynak": "sik-hatalar"})
+    for m in re.finditer(r"(\S+) {2,}(\S+)", metin):
+        adaylar.append({"kural": "NOK-BOSLUK", "bas": m.start(), "son": m.end(), "gorulen": m.group(),
+                        "oneri": f"{m.group(1)} {m.group(2)}", "kesinlik": "kesin", "kaynak": "yerlesik"})
     return adaylar
 
 
@@ -370,27 +468,27 @@ def _bicim_tutarliligi(paragraflar):
     return adaylar
 
 
+def bolumleri_yukle(calisma):
+    klasor = Path(calisma) / "metin"
+    if not (klasor / "eser.json").exists():
+        raise AtolyeHatasi("Önce 'hazirla' çalıştırılmalı: metin/eser.json yok.")
+    return [json.loads(d.read_text(encoding="utf-8")) for d in sorted(klasor.glob("bolum-*.json"))]
+
+
 def tara(calisma, tsv=None):
     calisma = Path(calisma)
-    metin_klasoru = calisma / "metin"
-    if not (metin_klasoru / "eser.json").exists():
-        raise AtolyeHatasi("Önce 'hazirla' çalıştırılmalı: metin/eser.json yok.")
     kurallar = sik_hatalari_yukle(tsv)
-    tum_paragraflar = []
-    adaylar = []
-    for dosya in sorted(metin_klasoru.glob("bolum-*.json")):
-        bolum = json.loads(dosya.read_text(encoding="utf-8"))
+    tum_paragraflar, adaylar = [], []
+    for bolum in bolumleri_yukle(calisma):
+        if bolum["tur"] != "duzyazi":
+            continue
         for p in bolum["paragraflar"]:
             tum_paragraflar.append((bolum["no"], p))
             for aday in paragraf_tara(p["metin"], kurallar):
                 adaylar.append({"bolum": bolum["no"], "paragraf": p["p"], **aday})
     adaylar.extend(_bicim_tutarliligi(tum_paragraflar))
     adaylar.sort(key=lambda a: (a["paragraf"], a["bas"]))
-    sonuc = {
-        "surum": SURUM,
-        "adaylar": adaylar,
-        "sayilar": dict(Counter(a["kural"] for a in adaylar)),
-    }
+    sonuc = {"surum": SURUM, "adaylar": adaylar, "sayilar": dict(Counter(a["kural"] for a in adaylar))}
     (calisma / "adaylar.json").write_text(json.dumps(sonuc, ensure_ascii=False, indent=1), encoding="utf-8")
     return sonuc
 
@@ -402,10 +500,10 @@ KESINLIK_ADLARI = {"kesin": "Kesin hata", "buyuk-ihtimal": "Büyük ihtimalle ha
 TIRNAKLAR = str.maketrans({"’": "'", "‘": "'", "`": "'", "´": "'", "“": '"', "”": '"', "„": '"', "«": '"', "»": '"'})
 
 
-def esle(metin):
-    """Alıntı karşılaştırması için ortak biçim: NFC, tek tip tırnak, tek boşluk."""
+def esle(metin, bosluk_koru=False):
+    """Alıntı karşılaştırması için ortak biçim: NFC, tek tip tırnak, (istenirse) tek boşluk."""
     metin = unicodedata.normalize("NFC", metin or "").translate(TIRNAKLAR).replace("…", "...")
-    return re.sub(r"\s+", " ", metin).strip()
+    return metin if bosluk_koru else re.sub(r"\s+", " ", metin).strip()
 
 
 def kural_bilgileri():
@@ -424,60 +522,101 @@ def kural_bilgileri():
     return bilgiler
 
 
+def _govdeler(metin):
+    """Kelimelerin kesmeden önceki gövdeleri, Türkçe küçük harfle: "Pîrân'a" → "pîrân"."""
+    return [re.split(r"['’]", k)[0] for k in KELIME.findall(tr_kucuk(metin or ""))]
+
+
 def yazim_karti_ornekleri(yol):
-    """yazim-karti.md tablosundaki 'Örnek' sütunu: yazarın onayladığı yazımlar."""
+    """yazim-karti.md tablosunun 'Örnek' sütunu: her örnek bir kelime gövdeleri kümesidir."""
     if not yol or not Path(yol).exists():
         return []
     ornekler = []
-    satirlar = [s for s in Path(yol).read_text(encoding="utf-8").splitlines() if s.strip().startswith("|")]
+    satirlar = [s for s in metin_oku(Path(yol)).splitlines() if s.strip().startswith("|")]
     for satir in satirlar[1:]:
         hucreler = [h.strip() for h in satir.strip().strip("|").split("|")]
         if len(hucreler) < 2 or set(hucreler[1]) <= set("-: "):
             continue
-        ornek = hucreler[1].strip("`\"“” ")
-        if ornek:
-            ornekler.append(esle(ornek))
+        for ornek in hucreler[1].split(","):
+            govdeler = set(_govdeler(ornek.strip("`\"“” ")))
+            if govdeler:
+                ornekler.append(govdeler)
     return ornekler
+
+
+def kartta_mi(mevcut, oneri, kart):
+    """Değişen her kelimenin gövdesi tek bir kart örneğinin kelimeleri arasındaysa True."""
+    once, sonra = _govdeler(mevcut), _govdeler(oneri)
+    degisen = [g for g in once if g not in sonra] if oneri is not None else once
+    return bool(degisen) and any(set(degisen) <= ornek for ornek in kart)
 
 
 def karar_alintilari(yol):
     if not yol or not Path(yol).exists():
         return []
     return [esle(m.group(1).strip("\"“” "))
-            for m in re.finditer(r"^Alıntı:\s*(.+)$", Path(yol).read_text(encoding="utf-8"), re.M)]
+            for m in re.finditer(r"^Alıntı:\s*(.+)$", metin_oku(Path(yol)), re.M)]
+
+
+def _sinirli(alinti, bosluk_koru=False):
+    """Kelime ortasından eşleşmeyen arama deseni: "ende", "Bende"nin içinde bulunmaz."""
+    aranan = esle(alinti, bosluk_koru)
+    if not aranan.strip():
+        return None
+    return re.compile(r"(?<![^\W_])" + re.escape(aranan) + r"(?![^\W_])")
 
 
 def paragraflari_yukle(calisma):
+    """{paragraf no: (bölüm no, ham metin)}"""
     paragraflar = {}
-    for dosya in sorted((Path(calisma) / "metin").glob("bolum-*.json")):
-        bolum = json.loads(dosya.read_text(encoding="utf-8"))
+    for bolum in bolumleri_yukle(calisma):
         for p in bolum["paragraflar"]:
-            paragraflar[p["p"]] = (bolum["no"], esle(p["metin"]))
-    if not paragraflar:
-        raise AtolyeHatasi("Önce 'hazirla' çalıştırılmalı: numaralı metin yok.")
+            paragraflar[p["p"]] = (bolum["no"], p["metin"])
     return paragraflar
 
 
-def yer_bul(alinti, bolum, paragraf, paragraflar):
-    """Alıntıyı önce verilen paragrafta, sonra aynı bölümde, sonra bütün eserde arar."""
-    aranan = esle(alinti)
-    if not aranan:
+def yer_bul(alinti, bolum, paragraf, paragraflar, bosluk_koru=False):
+    """Alıntının yeri: verilen paragrafta varsa orası; yoksa bölümde, sonra bütün eserde
+    yalnız tek bir paragrafta geçiyorsa orası. Bulunamaz ya da birden çok yerdeyse None."""
+    desen = _sinirli(alinti, bosluk_koru)
+    if desen is None:
         return None
-    if paragraf in paragraflar and aranan in paragraflar[paragraf][1]:
+
+    def var(p):
+        return desen.search(esle(paragraflar[p][1], bosluk_koru)) is not None
+
+    if paragraf in paragraflar and var(paragraf):
         return paragraflar[paragraf][0], paragraf
-    for kapsam in (lambda b: b == bolum, lambda b: True):
-        for p, (b, metin) in paragraflar.items():
-            if kapsam(b) and aranan in metin:
-                return b, p
+    for kapsam in ([p for p, (b, _) in paragraflar.items() if b == bolum], list(paragraflar)):
+        bulunan = [p for p in kapsam if var(p)]
+        if len(bulunan) == 1:
+            return paragraflar[bulunan[0]][0], bulunan[0]
+        if len(bulunan) > 1:
+            return None
     return None
 
 
-def gorus_dosyalari(calisma, dogrulanmis=False):
-    klasor = Path(calisma) / "gorusler"
-    dosyalar = sorted(klasor.glob("*.json")) if klasor.exists() else []
-    if dogrulanmis:
-        return [d for d in dosyalar if d.name.endswith(".dogrulanmis.json")]
-    return [d for d in dosyalar if not d.name.endswith(".dogrulanmis.json")]
+def _json_oku(dosya):
+    try:
+        veri = json.loads(dosya.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise AtolyeHatasi(f"{dosya.name} geçerli JSON değil (satır {e.lineno}, sütun {e.colno}): {e.msg}")
+    if not isinstance(veri, dict):
+        raise AtolyeHatasi(f"{dosya.name}: en dışta bir JSON nesnesi olmalı.")
+    for alan in ("imla", "bulgular", "sorular"):
+        veri[alan] = veri.get(alan) or []
+        if not isinstance(veri[alan], list):
+            raise AtolyeHatasi(f"{dosya.name}: '{alan}' bir liste olmalı.")
+    return veri
+
+
+def dogrulanmis_dosyalar(calisma):
+    """dogrula'nın bu okumada yazdığı dosyalar (eski okumalardan kalanlar karışmaz)."""
+    yol = Path(calisma) / "dogrulama.json"
+    if not yol.exists():
+        raise AtolyeHatasi("Önce 'dogrula' çalıştırılmalı.")
+    adlar = json.loads(yol.read_text(encoding="utf-8"))["dosyalar"]
+    return [Path(calisma) / "gorusler" / ad for ad in adlar]
 
 
 # Alıntı doğrulama ve yazım kartı süzgeci
@@ -486,29 +625,40 @@ def dogrula(calisma, atolye=None):
     calisma = Path(calisma)
     atolye = Path(atolye) if atolye else calisma.parent
     paragraflar = paragraflari_yukle(calisma)
+    duzyazi = {b["no"] for b in bolumleri_yukle(calisma) if b["tur"] == "duzyazi"}
     kart = yazim_karti_ornekleri(atolye / "yazim-karti.md")
     kararlar = karar_alintilari(atolye / "karar-defteri.md")
-    dosyalar = gorus_dosyalari(calisma)
+    klasor = calisma / "gorusler"
+    dosyalar = sorted(d for d in klasor.glob("*.json") if not d.name.endswith(".dogrulanmis.json")) if klasor.exists() else []
     if not dosyalar:
         raise AtolyeHatasi("Doğrulanacak görüş yok: .calisma/gorusler/ boş.")
 
     sayac = Counter()
+    yazilan = []
     for dosya in dosyalar:
-        gorus = json.loads(dosya.read_text(encoding="utf-8"))
+        gorus = _json_oku(dosya)
 
         imla = []
-        for bulgu in gorus.get("imla", []):
-            mevcut, oneri = bulgu.get("mevcut", ""), bulgu.get("oneri")
-            # Boşlukları tekleştirmeden karşılaştır: yalnız çift boşluğu düzelten öneri de geçerlidir.
-            if not mevcut or (oneri is not None and unicodedata.normalize("NFC", oneri) == unicodedata.normalize("NFC", mevcut)):
+        for bulgu in gorus["imla"]:
+            if not isinstance(bulgu, dict):
                 sayac["imla_gecersiz"] += 1
                 continue
-            if any(o in esle(mevcut) for o in kart):
+            mevcut, oneri = bulgu.get("mevcut") or "", bulgu.get("oneri")
+            if not mevcut.strip() or (oneri is not None and
+                                      unicodedata.normalize("NFC", oneri) == unicodedata.normalize("NFC", mevcut)):
+                sayac["imla_gecersiz"] += 1
+                continue
+            if kartta_mi(mevcut, oneri, kart):
                 sayac["imla_kart"] += 1
                 continue
-            yer = yer_bul(mevcut, bulgu.get("bolum"), bulgu.get("paragraf"), paragraflar)
+            # Yalnız boşlukta ayrışan önerilerde (çift boşluk) boşluklar tekleştirilmeden aranır.
+            bosluk = oneri is not None and esle(oneri) == esle(mevcut)
+            yer = yer_bul(mevcut, bulgu.get("bolum"), bulgu.get("paragraf"), paragraflar, bosluk)
             if yer is None:
                 sayac["imla_bulunamadi"] += 1
+                continue
+            if yer[0] not in duzyazi:
+                sayac["imla_taslak"] += 1
                 continue
             if yer != (bulgu.get("bolum"), bulgu.get("paragraf")):
                 sayac["imla_yer_duzeltildi"] += 1
@@ -521,9 +671,9 @@ def dogrula(calisma, atolye=None):
             sayac["imla_kalan"] += 1
 
         bulgular = []
-        for bulgu in gorus.get("bulgular", []):
+        for bulgu in gorus["bulgular"]:
             kanitlar = []
-            for kanit in bulgu.get("kanitlar", []):
+            for kanit in (bulgu.get("kanitlar") or []) if isinstance(bulgu, dict) else []:
                 yer = yer_bul(kanit.get("alinti", ""), kanit.get("bolum"), kanit.get("paragraf"), paragraflar)
                 if yer is None:
                     sayac["kanit_bulunamadi"] += 1
@@ -534,7 +684,7 @@ def dogrula(calisma, atolye=None):
                 sayac["bulgu_dustu"] += 1
                 continue
             bulgu["kanitlar"] = kanitlar
-            if any(k and (k in esle(x["alinti"]) or esle(x["alinti"]) in k) for k in kararlar for x in kanitlar):
+            if any(_karar_kapsar(k, x["alinti"]) for k in kararlar for x in kanitlar):
                 bulgu["kapali"] = True
                 sayac["bulgu_kapali"] += 1
             bulgular.append(bulgu)
@@ -543,10 +693,18 @@ def dogrula(calisma, atolye=None):
         gorus["imla"], gorus["bulgular"] = imla, bulgular
         hedef = dosya.with_name(dosya.stem + ".dogrulanmis.json")
         hedef.write_text(json.dumps(gorus, ensure_ascii=False, indent=1), encoding="utf-8")
+        yazilan.append(hedef.name)
 
-    sonuc = {"surum": SURUM, "dosyalar": [d.name for d in dosyalar], "sayilar": dict(sayac)}
+    sonuc = {"surum": SURUM, "dosyalar": yazilan, "sayilar": dict(sayac)}
     (calisma / "dogrulama.json").write_text(json.dumps(sonuc, ensure_ascii=False, indent=1), encoding="utf-8")
     return sonuc
+
+
+def _karar_kapsar(karar, alinti):
+    """Karar defterindeki alıntı ile kanıt örtüşüyor mu: kısa olan en az üç kelime ve uzunun içinde."""
+    kisa, uzun = sorted((esle(karar), esle(alinti)), key=len)
+    desen = _sinirli(kisa)
+    return kelime_say(kisa) >= 3 and desen is not None and desen.search(uzun) is not None
 
 
 # Sözlük sorgusu
@@ -574,35 +732,38 @@ def sozluk(calisma, getir=sozlukten_getir, bekleme=0.3):
     """Redaktörün 'sozluk_sorgu' alanına yazdığı madde başlarını sözlükte arar.
 
     Hepsi varsa bulgu doğrulanır; biri yoksa 'kesin' etiketi 'buyuk-ihtimal'e iner.
-    Sözlüğe erişilemezse bulgu olduğu gibi kalır ve bu raporda belirtilir.
+    Sözlüğe bir kez erişilemezse bu okumada bir daha denenmez; bulgular olduğu gibi kalır.
     """
     calisma = Path(calisma)
     onbellek_yolu = calisma / "sozluk.json"
     onbellek = json.loads(onbellek_yolu.read_text(encoding="utf-8")) if onbellek_yolu.exists() else {}
-    dosyalar = gorus_dosyalari(calisma, dogrulanmis=True)
-    if not dosyalar:
-        raise AtolyeHatasi("Önce 'dogrula' çalıştırılmalı.")
-
     sayac = Counter()
-    ag_kullanildi = False
-    for dosya in dosyalar:
+    ag_kullanildi = ag_kapali = False
+    for dosya in dogrulanmis_dosyalar(calisma):
         gorus = json.loads(dosya.read_text(encoding="utf-8"))
         for bulgu in gorus.get("imla", []):
             sorgular = bulgu.get("sozluk_sorgu") or []
+            if isinstance(sorgular, str):
+                sorgular = [sorgular]
+            sorgular = [s.strip() for s in sorgular if isinstance(s, str) and s.strip()]
             if not sorgular:
                 continue
             durumlar = []
             for kelime in sorgular:
-                anahtar = tr_kucuk(kelime.strip())
-                if anahtar not in onbellek:
+                anahtar = tr_kucuk(kelime)
+                if anahtar in onbellek:
+                    durum = onbellek[anahtar]
+                elif ag_kapali:
+                    durum = "erisilemedi"
+                else:
                     if ag_kullanildi and bekleme:
                         time.sleep(bekleme)
-                    durum = getir(kelime.strip())
+                    durum = getir(kelime)
                     ag_kullanildi = True
-                    if durum != "erisilemedi":
+                    if durum == "erisilemedi":
+                        ag_kapali = True
+                    else:
                         onbellek[anahtar] = durum
-                else:
-                    durum = onbellek[anahtar]
                 durumlar.append(durum)
             if "yok" in durumlar:
                 bulgu["sozluk"] = "yok"
@@ -623,29 +784,30 @@ def sozluk(calisma, getir=sozlukten_getir, bekleme=0.3):
 # İmla raporu
 
 def _hucre(metin):
-    return str(metin or "").replace("|", "\\|").replace("\n", " ")
+    """Tablo hücresi: dikey çizgi kaçırılır, çift boşluk görünür olur (␣)."""
+    metin = str(metin or "").replace("|", "\\|").replace("\n", " ")
+    return re.sub(r" {2,}", lambda m: "␣" * len(m.group()), metin)
 
 
 def rapor(calisma, cikti, eser_adi=None):
     calisma = Path(calisma)
-    dosyalar = gorus_dosyalari(calisma, dogrulanmis=True)
-    if not dosyalar:
-        raise AtolyeHatasi("Önce 'dogrula' çalıştırılmalı.")
     eser = json.loads((calisma / "metin" / "eser.json").read_text(encoding="utf-8"))
-    dogrulama_yolu = calisma / "dogrulama.json"
-    dogrulama = json.loads(dogrulama_yolu.read_text(encoding="utf-8")) if dogrulama_yolu.exists() else {"sayilar": {}}
+    dogrulama = json.loads((calisma / "dogrulama.json").read_text(encoding="utf-8")) if (calisma / "dogrulama.json").exists() else {}
+    paragraflar = paragraflari_yukle(calisma)
     kurallar = kural_bilgileri()
 
     imla, surekli, sorular = [], [], []
-    for dosya in dosyalar:
+    for dosya in dogrulanmis_dosyalar(calisma):
         gorus = json.loads(dosya.read_text(encoding="utf-8"))
-        if gorus.get("koltuk") != "redaktor":
-            continue
         imla.extend(gorus.get("imla", []))
         surekli.extend(b for b in gorus.get("bulgular", []) if not b.get("kapali"))
         sorular.extend(gorus.get("sorular", []))
 
-    imla.sort(key=lambda b: (b.get("paragraf") or 0, b.get("mevcut", "")))
+    def okuma_sirasi(b):
+        metin = esle(paragraflar.get(b.get("paragraf"), (0, ""))[1])
+        return b.get("paragraf") or 0, metin.find(esle(b.get("mevcut")))
+
+    imla.sort(key=okuma_sirasi)
     for sira, bulgu in enumerate(imla, start=1):
         bulgu["id"] = f"R-{sira:03d}"
     (calisma / "imla.json").write_text(json.dumps({"surum": SURUM, "bulgular": imla}, ensure_ascii=False, indent=1),
@@ -654,6 +816,7 @@ def rapor(calisma, cikti, eser_adi=None):
     kesinlik_sayilari = Counter(b["kesinlik"] for b in imla)
     kural_sayilari = Counter(b.get("kural", "?") for b in imla)
     okunan = [b for b in eser["bolumler"] if b["tur"] == "duzyazi"]
+    okunmayan = len(eser["bolumler"]) - len(okunan)
 
     s = [f"# Dil ve imla raporu{' — ' + eser_adi if eser_adi else ''}", ""]
     s.append(f"{datetime.date.today().isoformat()} · Kaynak: {', '.join(eser['kaynaklar'])} · "
@@ -665,6 +828,10 @@ def rapor(calisma, cikti, eser_adi=None):
     else:
         s.append("Yazım ve noktalama bulgusu yok.")
     sayilar = dogrulama.get("sayilar", {})
+    if okunmayan:
+        s.append(f"Taslak ya da not olarak işaretli {okunmayan} bölüm denetlenmedi.")
+    if eser.get("okunmayan_dipnot"):
+        s.append(f"{eser['okunmayan_dipnot']} dipnot denetlenmedi.")
     if sayilar.get("imla_kart"):
         s.append(f"Yazım kartınızdaki tercihlere uyan {sayilar['imla_kart']} bulgu gösterilmedi.")
     dusen = sayilar.get("imla_bulunamadi", 0) + sayilar.get("bulgu_dustu", 0)
@@ -696,8 +863,10 @@ def rapor(calisma, cikti, eser_adi=None):
         for bulgu in surekli:
             s += [f"### {bulgu.get('baslik', 'Süreklilik')}", "", bulgu.get("aciklama", ""), ""]
             for kanit in bulgu["kanitlar"]:
-                s.append(f"> “{kanit['alinti']}” — Bölüm {kanit['bolum']} · ¶{kanit['paragraf']}")
-                s.append("")
+                s += [f"> “{kanit['alinti']}” — Bölüm {kanit['bolum']} · ¶{kanit['paragraf']}", ""]
+            yollar = bulgu.get("ne_yapabilirsiniz") or []
+            if yollar:
+                s += ["Ne yapabilirsiniz:", ""] + [f"- {y}" for y in yollar] + [""]
 
     if sorular:
         s += ["", "## Size sorular", ""]
@@ -715,13 +884,19 @@ def rapor(calisma, cikti, eser_adi=None):
 # Komut satırı
 
 def main(argv=None):
+    for akim in (sys.stdout, sys.stderr):
+        try:
+            akim.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+
     ayr = argparse.ArgumentParser(prog="atolye.py", description="Kurgu Yazarlığı Atölyesi yardımcı betiği")
     alt = ayr.add_subparsers(dest="komut", required=True)
 
     h = alt.add_parser("hazirla", help="Metni çıkarır, bölümler, numaralar ve sayar.")
     h.add_argument("dosyalar", nargs="+")
     h.add_argument("--calisma", required=True)
-    h.add_argument("--kimlik", help="Eserin atolye/kimlik.md dosyası")
+    h.add_argument("--kimlik", help="Eserin atolye/kimlik.md dosyası (yoksa yok sayılır)")
 
     t = alt.add_parser("tara", help="İmla ön taraması: aday listesi üretir.")
     t.add_argument("--calisma", required=True)
@@ -743,14 +918,13 @@ def main(argv=None):
     try:
         if arg.komut == "hazirla":
             eser = hazirla(arg.dosyalar, arg.calisma, arg.kimlik)
+            ek = f" {eser['okunmayan_dipnot']} dipnot denetlenmeyecek." if eser["okunmayan_dipnot"] else ""
             print(f"{len(eser['bolumler'])} bölüm, {eser['paragraf_sayisi']} paragraf, "
-                  f"{eser['toplam_kelime']} kelime ({eser['duzyazi_kelime']} düzyazı).")
+                  f"{eser['toplam_kelime']} kelime ({eser['duzyazi_kelime']} düzyazı).{ek}")
         elif arg.komut == "tara":
-            sonuc = tara(arg.calisma, arg.kurallar)
-            print(f"{len(sonuc['adaylar'])} aday bulundu.")
+            print(f"{len(tara(arg.calisma, arg.kurallar)['adaylar'])} aday bulundu.")
         elif arg.komut == "dogrula":
-            sonuc = dogrula(arg.calisma, arg.atolye)
-            print(json.dumps(sonuc["sayilar"], ensure_ascii=False))
+            print(json.dumps(dogrula(arg.calisma, arg.atolye)["sayilar"], ensure_ascii=False))
         elif arg.komut == "sozluk":
             print(json.dumps(sozluk(arg.calisma), ensure_ascii=False))
         elif arg.komut == "rapor":
