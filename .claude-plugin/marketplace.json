@@ -1,0 +1,14 @@
+{
+  "name": "kurgu-yazarligi-atolyesi",
+  "description": "Türkçe yazan her kurgu yazarı için editörlük ve yayın kurulu eklentisi.",
+  "owner": {
+    "name": "The Native Stranger"
+  },
+  "plugins": [
+    {
+      "name": "kurgu-yazarligi-atolyesi",
+      "source": "./",
+      "description": "Kurgu Yazarlığı Atölyesi — Editörlük ve Yayın Kurulu. Eserinizi TDK'ya göre denetler, yapısını Campbell ve Vogler saatinde ve roman haritasında gösterir, yayın yönetmeninin kararıyla en fazla üç öneri sunar. Sizin yerinize yazmaz."
+    }
+  ]
+}

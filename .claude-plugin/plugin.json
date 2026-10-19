@@ -1,0 +1,23 @@
+{
+  "name": "kurgu-yazarligi-atolyesi",
+  "version": "0.1.0",
+  "description": "Kurgu Yazarlığı Atölyesi — Editörlük ve Yayın Kurulu. Okur, editör, gelişim editörü, redaktör, danışman, dosya okuru ve ajans ile yayın yönetmeninden oluşan bir masa. Eserinizi TDK'ya göre denetler, yapısını Campbell ve Vogler saatinde ve roman haritasında gösterir, en fazla üç karar ve tavsiye sunar. Sizin yerinize yazmaz.",
+  "author": {
+    "name": "The Native Stranger"
+  },
+  "homepage": "https://github.com/TheNativeStranger/kurgu-yazarligi-atolyesi",
+  "repository": "https://github.com/TheNativeStranger/kurgu-yazarligi-atolyesi",
+  "license": "MIT",
+  "keywords": [
+    "roman",
+    "öykü",
+    "küçürek",
+    "editör",
+    "redaktör",
+    "TDK",
+    "imla",
+    "yayın kurulu",
+    "yazarlık",
+    "yapı haritası"
+  ]
+}
